@@ -94,16 +94,16 @@
 
         const orderRef = firebase.database().ref("orders/" + userId);
         orderRef.on("value", (snapshot) => {
-          const data = snapshot.val();
-          console.log("收到訂單資料：", data);  // ← 新增這行
-  if (!data) {
+  const data = snapshot.val();
+  console.log("收到訂單資料：", data);
+
+  if (!data || !data.items) {
     document.getElementById("status").innerText = "找不到訂單，返回點餐頁...";
     setTimeout(() => location.href = "index.html", 1500);
     return;
   }
 
-  // 不管狀態為何都先 render 訂單明細
-  renderOrder(data.items);
+  renderOrder(Array.isArray(data.items) ? data.items : []);
 
   switch (data.status) {
     case "done":
@@ -121,6 +121,7 @@
       break;
   }
 });
+
 
       }
     }
