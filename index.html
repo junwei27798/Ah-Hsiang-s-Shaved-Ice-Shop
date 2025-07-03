@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>剉冰點餐頁面</title>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #fdf6e3;
+      color: #333;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #d2691e;
+      font-size: 2rem;
+      border-bottom: 2px dashed #d2691e;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .ingredient-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .ingredient {
+      background: #fff3d1;
+      border: 2px solid #d2691e;
+      padding: 10px;
+      border-radius: 8px;
+      width: 48%;
+      box-sizing: border-box;
+    }
+
+    .ingredient span {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    button {
+      padding: 5px 10px;
+      font-size: 1rem;
+      background-color: #d2691e;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #aaa;
+    }
+
+    .order-list {
+      background: #ffe;
+      border: 2px dashed #d2691e;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .order-item {
+      margin-bottom: 10px;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 5px;
+    }
+
+    .flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary {
+      background: #fff3d1;
+      padding: 10px;
+      border: 2px solid #d2691e;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>剉冰點餐</h1>
+
+  <div class="section">
+    <h3>基本配料 (最多 4 份)</h3>
+    <div id="basic-ingredients" class="ingredient-list"></div>
+  </div>
+
+  <div class="section">
+    <h3>額外配料</h3>
+    <div id="extra-ingredients" class="ingredient-list"></div>
+  </div>
+
+  <div class="section">
+    <button onclick="addIceBowl()">➕ 加入一碗剉冰</button>
+  </div>
+
+  <div class="section order-list" id="icebowls">
+    <h3>已加入的剉冰：</h3>
+    <!-- 剉冰碗會出現在這裡 -->
+  </div>
+
+  <div class="section">
+    <button onclick="submitOrder()">✅ 送出訂單</button>
+  </div>
+
+  <script>
+    const ingredients = ['仙草', '愛玉', '紅豆', '綠豆', '脆圓', '粉條', '地瓜', '芋頭', '煉乳'];
+    let basicCounts = {};
+    let extraCounts = {};
+    let iceBowls = [];
+
+    ingredients.forEach(name => {
+      basicCounts[name] = 0;
+      extraCounts[name] = 0;
+    });
+
+    function renderIngredients(targetId, counts, limit = null, isBasic = true) {
+      const container = document.getElementById(targetId);
+      container.innerHTML = '';
+
+      ingredients.forEach(name => {
+        const div = document.createElement('div');
+        div.className = 'ingredient';
+        div.innerHTML = `
+          <span>${name}</span>
+          <div class="controls">
+            <button onclick="adjustCount('${name}', -1, ${isBasic})">－</button>
+            <span id="${targetId}-${name}">${counts[name]}</span>
+            <button onclick="adjustCount('${name}', 1, ${isBasic})">＋</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function adjustCount(name, delta, isBasic) {
+      const counts = isBasic ? basicCounts : extraCounts;
+      if (isBasic) {
+        const total = getTotalBasicCount();
+        if (delta === 1 && total >= 4) {
+            alert("最多只能選 4 種 ( 包含重複的 ) 唷！");
+            return
+        }
+      }
+      counts[name] = Math.max(0, counts[name] + delta);
+      const targetId = isBasic ? 'basic-ingredients' : 'extra-ingredients';
+      document.getElementById(`${targetId}-${name}`).textContent = counts[name];
+    }
+
+    function getTotalBasicCount() {
+      return Object.values(basicCounts).reduce((a, b) => a + b, 0);
+    }
+
+    function addIceBowl() {
+  if (getTotalBasicCount() < 4) {
+    alert('請選滿 4 種配料唷！');
+    return;
+  }
+
+  const bowl = {
+    basic: { ...basicCounts },
+    extra: { ...extraCounts }
+  };
+  iceBowls.push(bowl);
+
+  // 儲存到 localStorage
+  localStorage.setItem('icebowls', JSON.stringify(iceBowls));
+
+  ingredients.forEach(name => {
+    basicCounts[name] = 0;
+    extraCounts[name] = 0;
+  });
+
+  renderIngredients('basic-ingredients', basicCounts, 4, true);
+  renderIngredients('extra-ingredients', extraCounts, null, false);
+  renderBowlList();
+}
+
+
+    function renderBowlList() {
+      const container = document.getElementById('icebowls');
+      container.innerHTML = '<h3>已加入的剉冰：</h3>';
+
+      if (iceBowls.length === 0) {
+        container.innerHTML += '<p>尚未加入任何剉冰。</p>';
+        return;
+      }
+
+      iceBowls.forEach((bowl, index) => {
+        const div = document.createElement('div');
+        div.className = 'order-item';
+        const basic = Object.entries(bowl.basic).filter(([k, v]) => v > 0).map(([k, v]) => `${k} x${v}`).join(', ');
+        const extra = Object.entries(bowl.extra).filter(([k, v]) => v > 0).map(([k, v]) => `${k} x${v}`).join(', ') || '無';
+
+        div.innerHTML = `
+          <div class="flex">
+            <div>
+              <strong>第 ${index + 1} 碗</strong><br>
+              基本：${basic}<br>
+              額外：${extra}
+            </div>
+            <button onclick="removeBowl(${index})">🗑 刪除</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function removeBowl(index) {
+  iceBowls.splice(index, 1);
+  localStorage.setItem('icebowls', JSON.stringify(iceBowls)); // 加這行
+  renderBowlList();
+}
+
+
+    function submitOrder() {
+      if (iceBowls.length === 0) {
+        alert('您還沒有加入任何剉冰碗喔！');
+        return;
+      }
+
+      // 儲存訂單到 localStorage
+  localStorage.setItem('icebowls', JSON.stringify(iceBowls));
+
+  // 跳轉到 confirm.html
+  window.location.href = 'confirm.html';
+
+      // 清空訂單
+      iceBowls = [];
+      renderBowlList();
+    }
+
+    // 初始化畫面
+    // 初始化畫面
+renderIngredients('basic-ingredients', basicCounts, 4, true);
+renderIngredients('extra-ingredients', extraCounts, null, false);
+
+// 還原 localStorage 資料
+const stored = localStorage.getItem('icebowls');
+if (stored) {
+  iceBowls = JSON.parse(stored);
+  renderBowlList();
+}
+
+  </script>
+</body>
+</html>

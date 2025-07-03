@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>剉冰訂單確認</title>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #fdf6e3;
+      color: #333;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #d2691e;
+      font-size: 2rem;
+      border-bottom: 2px dashed #d2691e;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .order {
+      background: #fff3d1;
+      border: 2px solid #d2691e;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .order-item {
+      margin-bottom: 15px;
+      border-bottom: 1px dashed #ccc;
+      padding-bottom: 10px;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      background-color: #d2691e;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>訂單確認</h1>
+
+  <div id="order-summary" class="order">
+    <!-- 訂單資料會放這裡 -->
+  </div>
+
+  <button onclick="closeLiff()">✅ 確認並關閉</button>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    // 讀取 localStorage 中的訂單資料
+    const stored = localStorage.getItem('icebowls');
+    const iceBowls = stored ? JSON.parse(stored) : [];
+
+    const container = document.getElementById('order-summary');
+
+    if (iceBowls.length === 0) {
+      container.innerHTML = '<p>目前沒有任何剉冰訂單。</p>';
+    } else {
+      iceBowls.forEach((bowl, i) => {
+        const basic = Object.entries(bowl.basic)
+          .filter(([k, v]) => v > 0)
+          .map(([k, v]) => `${k} x${v}`)
+          .join(', ');
+
+        const extra = Object.entries(bowl.extra)
+          .filter(([k, v]) => v > 0)
+          .map(([k, v]) => `${k} x${v}`)
+          .join(', ') || '無';
+
+        const div = document.createElement('div');
+        div.className = 'order-item';
+        div.innerHTML = `
+          <strong>第 ${i + 1} 碗</strong><br>
+          基本：${basic}<br>
+          額外：${extra}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // 初始化 LIFF 並提供關閉按鈕功能
+    function closeLiff() {
+      if (window.liff) {
+        liff.init({ liffId: "2007677925-l15WX11o" }) // 如果你用 LIFF SDK v2，需要先初始化
+          .then(() => {
+            if (liff.isInClient()) {
+              liff.closeWindow();
+            } else {
+              alert("不在 LINE App 中開啟，無法自動關閉視窗。");
+            }
+          })
+          .catch((err) => {
+            console.error("LIFF 初始化錯誤", err);
+          });
+      } else {
+        alert("LIFF SDK 未正確載入");
+      }
+    }
+  </script>
+</body>
+</html>
