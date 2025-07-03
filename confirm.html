@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>訂單確認中...</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h1>訂單確認中</h1>
+  <div id="order"></div>
+  <p id="status">訂單狀態：確認中...</p>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
+      authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
+      databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
+      projectId: "ah-hsiang-s-shaved-ice-shop",
+      storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
+      messagingSenderId: "525201397285",
+      appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
+      measurementId: "G-7C7J14C0S6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let userId = null;
+
+    async function init() {
+      await liff.init({ liffId: "2007677925-l15WX11o" });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+      } else {
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+
+        const orderRef = firebase.database().ref("orders/" + userId);
+        orderRef.on("value", (snapshot) => {
+          const data = snapshot.val();
+          if (!data) {
+            document.getElementById("status").innerText = "找不到訂單，返回點餐頁...";
+            setTimeout(() => location.href = "index.html", 1500);
+            return;
+          }
+
+          if (data.status === "done") {
+            document.getElementById("status").innerText = "訂單完成！即將返回首頁...";
+            setTimeout(() => location.href = "index.html", 2000);
+          } else {
+            document.getElementById("status").innerText = "訂單狀態：等待製作中...";
+            renderOrder(data.items);
+          }
+        });
+      }
+    }
+
+    function renderOrder(items) {
+      const container = document.getElementById("order");
+      container.innerHTML = "";
+      items.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <h3>剉冰 ${index + 1}</h3>
+          <strong>基本配料：</strong><br>
+          ${Object.entries(item.baseToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}<br>
+          <strong>額外配料：</strong><br>
+          ${Object.entries(item.extraToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}
+          <hr>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

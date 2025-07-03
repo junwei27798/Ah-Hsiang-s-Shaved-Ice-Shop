@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>店家訂單系統</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+  <h1>所有訂單</h1>
+  <div id="orders"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
+      authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
+      databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
+      projectId: "ah-hsiang-s-shaved-ice-shop",
+      storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
+      messagingSenderId: "525201397285",
+      appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
+      measurementId: "G-7C7J14C0S6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const ordersRef = db.ref("orders");
+
+    ordersRef.on("value", (snapshot) => {
+      const data = snapshot.val();
+      const container = document.getElementById("orders");
+      container.innerHTML = "";
+
+      if (!data) {
+        container.innerHTML = "<p>目前沒有訂單。</p>";
+        return;
+      }
+
+      Object.entries(data).forEach(([userId, order]) => {
+        const div = document.createElement("div");
+        div.style.border = "1px solid #ccc";
+        div.style.margin = "10px";
+        div.style.padding = "10px";
+
+        div.innerHTML = `
+          <h3>用戶 ID: ${userId}</h3>
+          <p><strong>狀態：</strong>${order.status}</p>
+          ${order.items.map((item, i) => `
+            <div>
+              <h4>剉冰 ${i + 1}</h4>
+              <strong>基本配料：</strong><br>
+              ${Object.entries(item.baseToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}<br>
+              <strong>額外配料：</strong><br>
+              ${Object.entries(item.extraToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}
+            </div><hr>
+          `).join('')}
+          ${order.status !== "done" ? `<button onclick="markDone('${userId}')">完成訂單</button>` : `<em>已完成</em>`}
+        `;
+        container.appendChild(div);
+      });
+    });
+
+    function markDone(userId) {
+      const confirmFinish = confirm(`確定要將 ${userId} 的訂單標記為完成嗎？`);
+      if (!confirmFinish) return;
+      db.ref("orders/" + userId + "/status").set("done");
+    }
+  </script>
+</body>
+</html>

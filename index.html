@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>剉冰點餐</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h1>剉冰點餐</h1>
+
+  <div id="ice-list"></div>
+  <button id="add-ice">新增一碗剉冰</button>
+  <br><br>
+  <button id="submit-order">送出訂單</button>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
+      authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
+      databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
+      projectId: "ah-hsiang-s-shaved-ice-shop",
+      storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
+      messagingSenderId: "525201397285",
+      appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
+      measurementId: "G-7C7J14C0S6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const baseToppings = ["紅豆", "綠豆", "粉圓", "花生"];
+    const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
+
+    let userId = null;
+    let iceBowls = [];
+
+    function renderBowls() {
+      const container = document.getElementById("ice-list");
+      container.innerHTML = "";
+      iceBowls.forEach((bowl, index) => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <h3>剉冰 ${index + 1}</h3>
+          <p>基本配料（最多4份）</p>
+          ${baseToppings.map(t => `
+            ${t}: <button onclick="updateTopping(${index}, 'base', '${t}', -1)">-</button>
+            ${bowl.baseToppings[t] || 0}
+            <button onclick="updateTopping(${index}, 'base', '${t}', 1)">+</button><br>
+          `).join('')}
+          <p>額外配料（無限制）</p>
+          ${extraToppings.map(t => `
+            ${t}: <button onclick="updateTopping(${index}, 'extra', '${t}', -1)">-</button>
+            ${bowl.extraToppings[t] || 0}
+            <button onclick="updateTopping(${index}, 'extra', '${t}', 1)">+</button><br>
+          `).join('')}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateTopping(index, type, name, delta) {
+      const bowl = iceBowls[index];
+      const toppings = type === 'base' ? bowl.baseToppings : bowl.extraToppings;
+      const current = toppings[name] || 0;
+      const newVal = Math.max(0, current + delta);
+
+      if (type === 'base') {
+        const totalBase = Object.values(bowl.baseToppings).reduce((a, b) => a + b, 0);
+        if (delta > 0 && totalBase >= 4) return alert("基本配料最多4份！");
+      }
+
+      toppings[name] = newVal;
+      renderBowls();
+    }
+
+    document.getElementById("add-ice").onclick = () => {
+      iceBowls.push({ baseToppings: {}, extraToppings: {} });
+      renderBowls();
+    };
+
+    document.getElementById("submit-order").onclick = () => {
+      if (!iceBowls.length) return alert("請新增至少一碗剉冰！");
+      const order = {
+        items: iceBowls,
+        status: "pending",
+        createdAt: Date.now()
+      };
+      firebase.database().ref("orders/" + userId).set(order).then(() => {
+        location.href = "confirm.html";
+      });
+    };
+
+    async function initLIFF() {
+      await liff.init({ liffId: "2007677925-l15WX11o" });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+      } else {
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+        // 進入頁面時先檢查是否已有未完成訂單
+        firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
+          const order = snapshot.val();
+          if (order && order.status === "pending") {
+            location.href = "confirm.html";
+          }
+        });
+      }
+    }
+
+    initLIFF();
+  </script>
+</body>
+</html>
