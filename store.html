@@ -5,6 +5,42 @@
   <title>店家訂單系統</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+    }
+    .order-card {
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      padding: 16px;
+      margin: 12px auto;
+      max-width: 600px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .order-card h3 {
+      margin-top: 0;
+    }
+    button {
+      padding: 6px 12px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    em {
+      color: gray;
+    }
+  </style>
 </head>
 <body>
   <h1>所有訂單</h1>
@@ -23,7 +59,6 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     const ordersRef = db.ref("orders");
 
     ordersRef.on("value", (snapshot) => {
@@ -37,31 +72,35 @@
       }
 
       Object.entries(data).forEach(([userId, order]) => {
+        const displayName = order.displayName || userId; // 如果沒有 displayName 則顯示 userId
+
         const div = document.createElement("div");
-        div.style.border = "1px solid #ccc";
-        div.style.margin = "10px";
-        div.style.padding = "10px";
+        div.className = "order-card";
 
         div.innerHTML = `
-          <h3>用戶 ID: ${userId}</h3>
+          <h3>訂購人：${displayName}</h3>
           <p><strong>狀態：</strong>${order.status}</p>
           ${order.items.map((item, i) => `
             <div>
               <h4>剉冰 ${i + 1}</h4>
               <strong>基本配料：</strong><br>
-              ${Object.entries(item.baseToppings || {}).map(([k, v]) => `${k} x ${v}`).join("<br>")}
-              <strong>額外配料：</strong><br>
-              ${Object.entries(item.extraToppings || {}).map(([k, v]) => `${k} x ${v}`).join("<br>")}
+              ${Object.entries(item.baseToppings || {}).map(([k, v]) => `${k} x ${v}`).join("<br>") || "無"}
+              <br><strong>額外配料：</strong><br>
+              ${Object.entries(item.extraToppings || {}).map(([k, v]) => `${k} x ${v}`).join("<br>") || "無"}
             </div><hr>
           `).join('')}
-          ${order.status !== "done" ? `<button onclick="markDone('${userId}')">完成訂單</button>` : `<em>已完成</em>`}
+          ${
+            order.status !== "done"
+              ? `<button onclick="markDone('${userId}')">完成訂單</button>`
+              : `<em>已完成</em>`
+          }
         `;
         container.appendChild(div);
       });
     });
 
     function markDone(userId) {
-      const confirmFinish = confirm(`確定要將 ${userId} 的訂單標記為完成嗎？`);
+      const confirmFinish = confirm(`確定要將此用戶的訂單標記為完成嗎？`);
       if (!confirmFinish) return;
       db.ref("orders/" + userId + "/status").set("done");
     }
