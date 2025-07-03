@@ -70,117 +70,139 @@
   <button id="submit-order">送出訂單</button>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
-      authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
-      databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
-      projectId: "ah-hsiang-s-shaved-ice-shop",
-      storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
-      messagingSenderId: "525201397285",
-      appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
-      measurementId: "G-7C7J14C0S6"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  const firebaseConfig = {
+    apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
+    authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
+    databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
+    projectId: "ah-hsiang-s-shaved-ice-shop",
+    storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
+    messagingSenderId: "525201397285",
+    appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
+    measurementId: "G-7C7J14C0S6"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    const baseToppings = ["紅豆", "綠豆", "粉圓", "花生"];
-    const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
+  const baseToppings = ["紅豆", "綠豆", "粉圓", "花生"];
+  const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
 
-    let userId = null;
-    let displayName = "";
-    let iceBowls = [];
+  let userId = null;
+  let displayName = "";
+  let iceBowls = [];
 
-    function renderBowls() {
-      const container = document.getElementById("ice-list");
-      container.innerHTML = "";
-      iceBowls.forEach((bowl, index) => {
-        const div = document.createElement("div");
-        div.className = "ice-bowl";
-        div.innerHTML = `
-          <h3>剉冰 ${index + 1}</h3>
-          <p>基本配料（最多4份）</p>
-          ${baseToppings.map(t => `
-            ${t}: <button onclick="updateTopping(${index}, 'base', '${t}', -1)">-</button>
-            ${bowl.baseToppings[t] || 0}
-            <button onclick="updateTopping(${index}, 'base', '${t}', 1)">+</button><br>
-          `).join('')}
-          <p>額外配料（無限制）</p>
-          ${extraToppings.map(t => `
-            ${t}: <button onclick="updateTopping(${index}, 'extra', '${t}', -1)">-</button>
-            ${bowl.extraToppings[t] || 0}
-            <button onclick="updateTopping(${index}, 'extra', '${t}', 1)">+</button><br>
-          `).join('')}
-          <button class="delete-btn" onclick="deleteBowl(${index})">刪除這碗</button>
-        `;
-        container.appendChild(div);
-      });
+  function calculatePrice(bowl) {
+    const basePrice = 60;
+    const extraCount = Object.values(bowl.extraToppings).reduce((a, b) => a + b, 0);
+    return basePrice + extraCount * 5;
+  }
+
+  function renderBowls() {
+    const container = document.getElementById("ice-list");
+    container.innerHTML = "";
+
+    let totalPrice = 0;
+
+    iceBowls.forEach((bowl, index) => {
+      const bowlPrice = calculatePrice(bowl);
+      totalPrice += bowlPrice;
+
+      const div = document.createElement("div");
+      div.className = "ice-bowl";
+      div.innerHTML = `
+        <h3>剉冰 ${index + 1}</h3>
+        <p><strong>基本配料（剛好4份）</strong></p>
+        ${baseToppings.map(t => `
+          ${t}
+          <button onclick="updateTopping(${index}, 'base', '${t}', -1)">-</button>
+          <span>${bowl.baseToppings[t] || 0}</span>
+          <button onclick="updateTopping(${index}, 'base', '${t}', 1)">+</button>
+          <br>
+        `).join('')}
+        <p><strong>額外配料（每份+5元）</strong></p>
+        ${extraToppings.map(t => `
+          ${t}
+          <button onclick="updateTopping(${index}, 'extra', '${t}', -1)">-</button>
+          <span>${bowl.extraToppings[t] || 0}</span>
+          <button onclick="updateTopping(${index}, 'extra', '${t}', 1)">+</button>
+          <br>
+        `).join('')}
+        <p><strong>小計：$${bowlPrice}</strong></p>
+        <button class="delete-btn" onclick="deleteBowl(${index})">刪除這碗</button>
+      `;
+      container.appendChild(div);
+    });
+
+    const totalDiv = document.createElement("div");
+    totalDiv.innerHTML = `<h2>總金額：$${totalPrice}</h2>`;
+    container.appendChild(totalDiv);
+  }
+
+  function updateTopping(index, type, name, delta) {
+    const bowl = iceBowls[index];
+    const toppings = type === 'base' ? bowl.baseToppings : bowl.extraToppings;
+    const current = toppings[name] || 0;
+    const newVal = Math.max(0, current + delta);
+
+    if (type === 'base') {
+      const totalBase = Object.values(bowl.baseToppings).reduce((a, b) => a + b, 0);
+      if (delta > 0 && totalBase >= 4) return;
     }
 
-    function updateTopping(index, type, name, delta) {
-      const bowl = iceBowls[index];
-      const toppings = type === 'base' ? bowl.baseToppings : bowl.extraToppings;
-      const current = toppings[name] || 0;
-      const newVal = Math.max(0, current + delta);
+    toppings[name] = newVal;
+    renderBowls();
+  }
 
-      if (type === 'base') {
-        const totalBase = Object.values(bowl.baseToppings).reduce((a, b) => a + b, 0);
-        if (delta > 0 && totalBase >= 4) return alert("基本配料最多4份！");
+  function deleteBowl(index) {
+    iceBowls.splice(index, 1);
+    renderBowls();
+  }
+
+  document.getElementById("add-ice").onclick = () => {
+    iceBowls.push({ baseToppings: {}, extraToppings: {} });
+    renderBowls();
+  };
+
+  document.getElementById("submit-order").onclick = () => {
+    if (!iceBowls.length) return alert("請新增至少一碗剉冰！");
+    for (let i = 0; i < iceBowls.length; i++) {
+      const totalBase = Object.values(iceBowls[i].baseToppings).reduce((a, b) => a + b, 0);
+      if (totalBase !== 4) {
+        return alert(`第 ${i + 1} 碗的基本配料必須剛好4份！`);
       }
-
-      toppings[name] = newVal;
-      renderBowls();
     }
 
-    function deleteBowl(index) {
-      iceBowls.splice(index, 1);
-      renderBowls();
-    }
-
-    document.getElementById("add-ice").onclick = () => {
-      iceBowls.push({ baseToppings: {}, extraToppings: {} });
-      renderBowls();
+    const order = {
+      items: iceBowls,
+      displayName: displayName,
+      status: "confirmed",
+      createdAt: Date.now()
     };
 
-    document.getElementById("submit-order").onclick = () => {
-      if (!iceBowls.length) return alert("請新增至少一碗剉冰！");
-      for (let i = 0; i < iceBowls.length; i++) {
-        const totalBase = Object.values(iceBowls[i].baseToppings).reduce((a, b) => a + b, 0);
-        if (totalBase !== 4) {
-          return alert(`第 ${i + 1} 碗的基本配料必須選滿4份！`);
+    firebase.database().ref("orders/" + userId).set(order).then(() => {
+      location.href = "confirm.html";
+    });
+  };
+
+  async function initLIFF() {
+    await liff.init({ liffId: "2007677925-l15WX11o" });
+    if (!liff.isLoggedIn()) {
+      liff.login();
+    } else {
+      const profile = await liff.getProfile();
+      userId = profile.userId;
+      displayName = profile.displayName;
+
+      firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
+        const order = snapshot.val();
+        if (order && (order.status === "pending" || order.status === "confirmed")) {
+          location.href = "confirm.html";
         }
-      }
-
-      const order = {
-        items: iceBowls,
-        displayName: displayName,
-        status: "confirmed",
-        createdAt: Date.now()
-      };
-
-      firebase.database().ref("orders/" + userId).set(order).then(() => {
-        location.href = "confirm.html";
       });
-    };
-
-    async function initLIFF() {
-      await liff.init({ liffId: "2007677925-l15WX11o" });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-      } else {
-        const profile = await liff.getProfile();
-        userId = profile.userId;
-        displayName = profile.displayName;
-
-        firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
-          const order = snapshot.val();
-          if (order && (order.status === "pending" || order.status === "confirmed")) {
-            location.href = "confirm.html";
-          }
-        });
-      }
     }
+  }
 
-    initLIFF();
-  </script>
+  initLIFF();
+</script>
+
 </body>
 </html>
