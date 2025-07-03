@@ -117,21 +117,24 @@
     }
 
     function renderOrder(items) {
-      const container = document.getElementById("order");
-      container.innerHTML = "";
-      items.forEach((item, index) => {
-        const div = document.createElement("div");
-        div.className = "ice-bowl";
-        div.innerHTML = `
-          <h3>剉冰 ${index + 1}</h3>
-          <strong>基本配料：</strong>
-          ${Object.entries(item.baseToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}
-          <strong>額外配料：</strong>
-          ${Object.entries(item.extraToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}
-        `;
-        container.appendChild(div);
-      });
-    }
+  const container = document.getElementById("order");
+  container.innerHTML = "";
+  items.forEach((item, index) => {
+    const baseToppings = item.baseToppings || {};
+    const extraToppings = item.extraToppings || {};
+    const div = document.createElement("div");
+    div.className = "ice-bowl";
+    div.innerHTML = `
+      <h3>剉冰 ${index + 1}</h3>
+      <strong>基本配料：</strong>
+      ${Object.entries(baseToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}
+      <strong>額外配料：</strong>
+      ${Object.entries(extraToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}
+    `;
+    container.appendChild(div);
+  });
+}
+
 
     init();
   </script>
