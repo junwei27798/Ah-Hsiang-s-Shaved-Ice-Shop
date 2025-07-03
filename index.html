@@ -139,10 +139,15 @@
     }
 
     // 初始化 LIFF + 檢查狀態
-    window.onload = async () => {
-      await liff.init({ liffId: "2007677925-l15WX11o" });
-      await checkOrderStatus();
-    };
+    let orderRef;
+
+window.onload = async () => {
+  await liff.init({ liffId: "2007677925-l15WX11o" });
+  const userId = liff.getDecodedIDToken().sub;
+  orderRef = doc(db, "orders", userId);
+  await checkOrderStatus();
+};
+
   </script>
 </body>
 </html>
