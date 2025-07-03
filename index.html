@@ -139,16 +139,17 @@
     };
 
     document.getElementById("submit-order").onclick = () => {
-      if (!iceBowls.length) return alert("請新增至少一碗剉冰！");
-      const order = {
-        items: iceBowls,
-        status: "pending",
-        createdAt: Date.now()
-      };
-      firebase.database().ref("orders/" + userId).set(order).then(() => {
-        location.href = "confirm.html";
-      });
-    };
+  if (!iceBowls.length) return alert("請新增至少一碗剉冰！");
+  const order = {
+    items: iceBowls,
+    status: "confirmed",  // ✅ 改這裡
+    createdAt: Date.now()
+  };
+  firebase.database().ref("orders/" + userId).set(order).then(() => {
+    location.href = "confirm.html";
+  });
+};
+
 
     async function initLIFF() {
       await liff.init({ liffId: "2007677925-l15WX11o" });
@@ -158,11 +159,12 @@
         const profile = await liff.getProfile();
         userId = profile.userId;
         firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
-          const order = snapshot.val();
-          if (order && order.status === "pending") {
-            location.href = "confirm.html";
-          }
-        });
+  const order = snapshot.val();
+  if (order && (order.status === "pending" || order.status === "confirmed")) {
+    location.href = "confirm.html";
+  }
+});
+
       }
     }
 
