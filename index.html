@@ -14,12 +14,10 @@
       margin: 0;
       background: #f9f9f9;
     }
-
     h1 {
       text-align: center;
       color: #333;
     }
-
     .ice-bowl {
       background: #fff;
       padding: 12px;
@@ -27,11 +25,9 @@
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-
     .ice-bowl h3 {
       margin-top: 0;
     }
-
     button {
       font-size: 16px;
       margin: 2px 4px;
@@ -42,11 +38,13 @@
       border-radius: 4px;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #45a049;
     }
-
+    .delete-btn {
+      background-color: #dc3545;
+      margin-top: 8px;
+    }
     #add-ice, #submit-order {
       width: 100%;
       padding: 12px;
@@ -54,11 +52,9 @@
       margin-top: 12px;
       background-color: #007bff;
     }
-
     #submit-order {
       background-color: #28a745;
     }
-
     p {
       margin: 8px 0 4px;
       font-weight: bold;
@@ -91,6 +87,7 @@
     const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
 
     let userId = null;
+    let displayName = "";
     let iceBowls = [];
 
     function renderBowls() {
@@ -113,6 +110,7 @@
             ${bowl.extraToppings[t] || 0}
             <button onclick="updateTopping(${index}, 'extra', '${t}', 1)">+</button><br>
           `).join('')}
+          <button class="delete-btn" onclick="deleteBowl(${index})">刪除這碗</button>
         `;
         container.appendChild(div);
       });
@@ -133,23 +131,36 @@
       renderBowls();
     }
 
+    function deleteBowl(index) {
+      iceBowls.splice(index, 1);
+      renderBowls();
+    }
+
     document.getElementById("add-ice").onclick = () => {
       iceBowls.push({ baseToppings: {}, extraToppings: {} });
       renderBowls();
     };
 
     document.getElementById("submit-order").onclick = () => {
-  if (!iceBowls.length) return alert("請新增至少一碗剉冰！");
-  const order = {
-    items: iceBowls,
-    status: "confirmed",  // ✅ 改這裡
-    createdAt: Date.now()
-  };
-  firebase.database().ref("orders/" + userId).set(order).then(() => {
-    location.href = "confirm.html";
-  });
-};
+      if (!iceBowls.length) return alert("請新增至少一碗剉冰！");
+      for (let i = 0; i < iceBowls.length; i++) {
+        const totalBase = Object.values(iceBowls[i].baseToppings).reduce((a, b) => a + b, 0);
+        if (totalBase !== 4) {
+          return alert(`第 ${i + 1} 碗的基本配料必須選滿4份！`);
+        }
+      }
 
+      const order = {
+        items: iceBowls,
+        displayName: displayName,
+        status: "confirmed",
+        createdAt: Date.now()
+      };
+
+      firebase.database().ref("orders/" + userId).set(order).then(() => {
+        location.href = "confirm.html";
+      });
+    };
 
     async function initLIFF() {
       await liff.init({ liffId: "2007677925-l15WX11o" });
@@ -158,13 +169,14 @@
       } else {
         const profile = await liff.getProfile();
         userId = profile.userId;
-        firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
-  const order = snapshot.val();
-  if (order && (order.status === "pending" || order.status === "confirmed")) {
-    location.href = "confirm.html";
-  }
-});
+        displayName = profile.displayName;
 
+        firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
+          const order = snapshot.val();
+          if (order && (order.status === "pending" || order.status === "confirmed")) {
+            location.href = "confirm.html";
+          }
+        });
       }
     }
 
