@@ -21,6 +21,13 @@
       text-align: center;
       color: #333;
       font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    #user-name {
+      text-align: center;
+      font-size: 18px;
+      color: #666;
       margin-bottom: 20px;
     }
 
@@ -65,6 +72,7 @@
 </head>
 <body>
   <h1>訂單確認中</h1>
+  <div id="user-name">載入使用者資料中...</div>
   <div id="order"></div>
   <p id="status">訂單狀態：確認中...</p>
 
@@ -94,57 +102,59 @@
 
         const orderRef = firebase.database().ref("orders/" + userId);
         orderRef.on("value", (snapshot) => {
-  const data = snapshot.val();
-  console.log("收到訂單資料：", data);
+          const data = snapshot.val();
+          console.log("收到訂單資料：", data);
 
-  if (!data || !data.items) {
-    document.getElementById("status").innerText = "找不到訂單，返回點餐頁...";
-    setTimeout(() => location.href = "index.html", 1500);
-    return;
-  }
+          if (!data || !data.items) {
+            document.getElementById("status").innerText = "找不到訂單，返回點餐頁...";
+            setTimeout(() => location.href = "index.html", 1500);
+            return;
+          }
 
-  renderOrder(Array.isArray(data.items) ? data.items : []);
+          // 顯示使用者名稱
+          const name = data.displayName || "未知使用者";
+          document.getElementById("user-name").innerText = `訂購人：${name}`;
 
-  switch (data.status) {
-    case "done":
-      document.getElementById("status").innerText = "✅ 訂單完成！即將返回首頁...";
-      setTimeout(() => location.href = "index.html", 2000);
-      break;
-    case "pending":
-      document.getElementById("status").innerText = "訂單狀態：等待製作中...";
-      break;
-    case "confirmed":
-      document.getElementById("status").innerText = "訂單已確認，準備中...";
-      break;
-    default:
-      document.getElementById("status").innerText = `訂單狀態：${data.status || "未知"}`;
-      break;
-  }
-});
+          renderOrder(Array.isArray(data.items) ? data.items : []);
 
-
+          // 狀態顯示
+          switch (data.status) {
+            case "done":
+              document.getElementById("status").innerText = "✅ 訂單完成！即將返回首頁...";
+              setTimeout(() => location.href = "index.html", 2000);
+              break;
+            case "pending":
+              document.getElementById("status").innerText = "訂單狀態：等待製作中...";
+              break;
+            case "confirmed":
+              document.getElementById("status").innerText = "訂單已確認，準備中...";
+              break;
+            default:
+              document.getElementById("status").innerText = `訂單狀態：${data.status || "未知"}`;
+              break;
+          }
+        });
       }
     }
 
     function renderOrder(items) {
-  const container = document.getElementById("order");
-  container.innerHTML = "";
-  items.forEach((item, index) => {
-    const baseToppings = item.baseToppings || {};
-    const extraToppings = item.extraToppings || {};
-    const div = document.createElement("div");
-    div.className = "ice-bowl";
-    div.innerHTML = `
-      <h3>剉冰 ${index + 1}</h3>
-      <strong>基本配料：</strong>
-      ${Object.entries(baseToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}
-      <strong>額外配料：</strong>
-      ${Object.entries(extraToppings).map(([k, v]) => `${k} x ${v}`).join("<br>")}
-    `;
-    container.appendChild(div);
-  });
-}
-
+      const container = document.getElementById("order");
+      container.innerHTML = "";
+      items.forEach((item, index) => {
+        const baseToppings = item.baseToppings || {};
+        const extraToppings = item.extraToppings || {};
+        const div = document.createElement("div");
+        div.className = "ice-bowl";
+        div.innerHTML = `
+          <h3>剉冰 ${index + 1}</h3>
+          <strong>基本配料：</strong>
+          ${Object.entries(baseToppings).map(([k, v]) => `${k} x ${v}`).join("<br>") || "無"}
+          <strong>額外配料：</strong>
+          ${Object.entries(extraToppings).map(([k, v]) => `${k} x ${v}`).join("<br>") || "無"}
+        `;
+        container.appendChild(div);
+      });
+    }
 
     init();
   </script>
