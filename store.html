@@ -52,7 +52,6 @@
               ${Object.entries(item.baseToppings || {}).map(([k, v]) => `${k} x ${v}`).join("<br>")}
               <strong>額外配料：</strong><br>
               ${Object.entries(item.extraToppings || {}).map(([k, v]) => `${k} x ${v}`).join("<br>")}
-              ${item.baseToppings ? Object.entries(item.baseToppings).map(...).join(...) : "無"}
             </div><hr>
           `).join('')}
           ${order.status !== "done" ? `<button onclick="markDone('${userId}')">完成訂單</button>` : `<em>已完成</em>`}
