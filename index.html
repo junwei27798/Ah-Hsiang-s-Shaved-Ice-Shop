@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,20 +15,20 @@
       margin: 0;
       background: #f9f9f9;
     }
+
     h1 {
       text-align: center;
       color: #333;
     }
-    .ice-bowl {
+
+    .section {
       background: #fff;
       padding: 12px;
-      margin: 12px 0;
+      margin-bottom: 20px;
       border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
-    .ice-bowl h3 {
-      margin-top: 0;
-    }
+
     button {
       font-size: 16px;
       margin: 2px 4px;
@@ -38,171 +39,189 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #45a049;
     }
+
     .delete-btn {
       background-color: #dc3545;
-      margin-top: 8px;
     }
-    #add-ice, #submit-order {
+
+    .action-btn {
       width: 100%;
       padding: 12px;
       font-size: 18px;
       margin-top: 12px;
-      background-color: #007bff;
     }
-    #submit-order {
+
+    .submit-btn {
       background-color: #28a745;
     }
-    p {
-      margin: 8px 0 4px;
+
+    .add-bowl-btn {
+      background-color: #007bff;
+    }
+
+    .price-tag {
       font-weight: bold;
+      margin-top: 8px;
     }
   </style>
 </head>
+
 <body>
   <h1>剉冰點餐</h1>
 
-  <div id="ice-list"></div>
-  <button id="add-ice">新增一碗剉冰</button>
-  <br>
-  <button id="submit-order">送出訂單</button>
+  <div class="section" id="topping-selector"></div>
+
+  <button class="action-btn add-bowl-btn" id="add-bowl-btn">✅ 加入這碗剉冰</button>
+
+  <div class="section" id="bowl-list"></div>
+
+  <button class="action-btn submit-btn" id="submit-order">送出訂單</button>
 
   <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
-    authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
-    databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
-    projectId: "ah-hsiang-s-shaved-ice-shop",
-    storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
-    messagingSenderId: "525201397285",
-    appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
-    measurementId: "G-7C7J14C0S6"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+    const firebaseConfig = {
+      apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
+      authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
+      databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
+      projectId: "ah-hsiang-s-shaved-ice-shop",
+      storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
+      messagingSenderId: "525201397285",
+      appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
+      measurementId: "G-7C7J14C0S6"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-  const baseToppings = ["紅豆", "綠豆", "粉圓", "花生"];
-  const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
+    const baseToppings = ["紅豆", "綠豆", "粉圓", "花生"];
+    const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
+    let userId = "";
+    let displayName = "";
 
-  let userId = null;
-  let displayName = "";
-  let iceBowls = [];
+    let currentSelection = {
+      baseToppings: {},
+      extraToppings: {}
+    };
+    let iceBowls = [];
 
-  function calculatePrice(bowl) {
-    const basePrice = 60;
-    const extraCount = Object.values(bowl.extraToppings).reduce((a, b) => a + b, 0);
-    return basePrice + extraCount * 5;
-  }
+    function updateTopping(type, name, delta) {
+      const toppings = type === "base" ? currentSelection.baseToppings : currentSelection.extraToppings;
+      const value = toppings[name] || 0;
+      const newVal = Math.max(0, value + delta);
 
-  function renderBowls() {
-    const container = document.getElementById("ice-list");
-    container.innerHTML = "";
+      if (type === "base") {
+        const totalBase = Object.values(currentSelection.baseToppings).reduce((a, b) => a + b, 0);
+        if (delta > 0 && totalBase >= 4) return; // 限制基本配料最多4
+      }
 
-    let totalPrice = 0;
-
-    iceBowls.forEach((bowl, index) => {
-      const bowlPrice = calculatePrice(bowl);
-      totalPrice += bowlPrice;
-
-      const div = document.createElement("div");
-      div.className = "ice-bowl";
-      div.innerHTML = `
-        <h3>剉冰 ${index + 1}</h3>
-        <p><strong>基本配料（剛好4份）</strong></p>
-        ${baseToppings.map(t => `
-          ${t}
-          <button onclick="updateTopping(${index}, 'base', '${t}', -1)">-</button>
-          <span>${bowl.baseToppings[t] || 0}</span>
-          <button onclick="updateTopping(${index}, 'base', '${t}', 1)">+</button>
-          <br>
-        `).join('')}
-        <p><strong>額外配料（每份+5元）</strong></p>
-        ${extraToppings.map(t => `
-          ${t}
-          <button onclick="updateTopping(${index}, 'extra', '${t}', -1)">-</button>
-          <span>${bowl.extraToppings[t] || 0}</span>
-          <button onclick="updateTopping(${index}, 'extra', '${t}', 1)">+</button>
-          <br>
-        `).join('')}
-        <p><strong>小計：$${bowlPrice}</strong></p>
-        <button class="delete-btn" onclick="deleteBowl(${index})">刪除這碗</button>
-      `;
-      container.appendChild(div);
-    });
-
-    const totalDiv = document.createElement("div");
-    totalDiv.innerHTML = `<h2>總金額：$${totalPrice}</h2>`;
-    container.appendChild(totalDiv);
-  }
-
-  function updateTopping(index, type, name, delta) {
-    const bowl = iceBowls[index];
-    const toppings = type === 'base' ? bowl.baseToppings : bowl.extraToppings;
-    const current = toppings[name] || 0;
-    const newVal = Math.max(0, current + delta);
-
-    if (type === 'base') {
-      const totalBase = Object.values(bowl.baseToppings).reduce((a, b) => a + b, 0);
-      if (delta > 0 && totalBase >= 4) return;
+      toppings[name] = newVal;
+      renderSelector();
     }
 
-    toppings[name] = newVal;
-    renderBowls();
-  }
+    function calculatePrice(bowl) {
+      const basePrice = 60;
+      const extraCount = Object.values(bowl.extraToppings).reduce((a, b) => a + b, 0);
+      return basePrice + extraCount * 5;
+    }
 
-  function deleteBowl(index) {
-    iceBowls.splice(index, 1);
-    renderBowls();
-  }
+    function renderSelector() {
+      const div = document.getElementById("topping-selector");
+      div.innerHTML = `
+        <h3>請選擇配料</h3>
+        <p><strong>基本配料（剛好4份）</strong></p>
+        ${baseToppings.map(t => `
+          ${t} <button onclick="updateTopping('base', '${t}', -1)">-</button>
+          ${currentSelection.baseToppings[t] || 0}
+          <button onclick="updateTopping('base', '${t}', 1)">+</button><br>
+        `).join("")}
+        <p><strong>額外配料（每份+5元）</strong></p>
+        ${extraToppings.map(t => `
+          ${t} <button onclick="updateTopping('extra', '${t}', -1)">-</button>
+          ${currentSelection.extraToppings[t] || 0}
+          <button onclick="updateTopping('extra', '${t}', 1)">+</button><br>
+        `).join("")}
+      `;
+    }
 
-  document.getElementById("add-ice").onclick = () => {
-    iceBowls.push({ baseToppings: {}, extraToppings: {} });
-    renderBowls();
-  };
+    function renderBowlList() {
+      const listDiv = document.getElementById("bowl-list");
+      listDiv.innerHTML = "";
 
-  document.getElementById("submit-order").onclick = () => {
-    if (!iceBowls.length) return alert("請新增至少一碗剉冰！");
-    for (let i = 0; i < iceBowls.length; i++) {
-      const totalBase = Object.values(iceBowls[i].baseToppings).reduce((a, b) => a + b, 0);
-      if (totalBase !== 4) {
-        return alert(`第 ${i + 1} 碗的基本配料必須剛好4份！`);
+      let total = 0;
+
+      iceBowls.forEach((bowl, index) => {
+        const price = calculatePrice(bowl);
+        total += price;
+        const el = document.createElement("div");
+        el.className = "ice-bowl";
+        el.innerHTML = `
+          <h3>剉冰 ${index + 1}</h3>
+          <p>基本配料: ${Object.entries(bowl.baseToppings).map(([k, v]) => `${k}×${v}`).join(", ")}</p>
+          <p>額外配料: ${Object.entries(bowl.extraToppings).map(([k, v]) => `${k}×${v}`).join(", ") || "無"}</p>
+          <p class="price-tag">小計：$${price}</p>
+          <button class="delete-btn" onclick="removeBowl(${index})">刪除這碗</button>
+        `;
+        listDiv.appendChild(el);
+      });
+
+      const totalEl = document.createElement("p");
+      totalEl.className = "price-tag";
+      totalEl.innerText = `總金額：$${total}`;
+      listDiv.appendChild(totalEl);
+    }
+
+    function removeBowl(index) {
+      iceBowls.splice(index, 1);
+      renderBowlList();
+    }
+
+    document.getElementById("add-bowl-btn").onclick = () => {
+      const totalBase = Object.values(currentSelection.baseToppings).reduce((a, b) => a + b, 0);
+      if (totalBase !== 4) return alert("基本配料必須剛好選4份！");
+
+      iceBowls.push(JSON.parse(JSON.stringify(currentSelection))); // 深拷貝
+      currentSelection = { baseToppings: {}, extraToppings: {} };
+      renderSelector();
+      renderBowlList();
+    };
+
+    document.getElementById("submit-order").onclick = () => {
+      if (!iceBowls.length) return alert("請至少加入一碗剉冰");
+
+      const order = {
+        items: iceBowls,
+        displayName,
+        status: "confirmed",
+        createdAt: Date.now()
+      };
+
+      firebase.database().ref("orders/" + userId).set(order).then(() => {
+        location.href = "confirm.html";
+      });
+    };
+
+    async function initLIFF() {
+      await liff.init({ liffId: "2007677925-l15WX11o" });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+      } else {
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+        displayName = profile.displayName;
+
+        firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
+          const order = snapshot.val();
+          if (order && (order.status === "pending" || order.status === "confirmed")) {
+            location.href = "confirm.html";
+          }
+        });
       }
     }
 
-    const order = {
-      items: iceBowls,
-      displayName: displayName,
-      status: "confirmed",
-      createdAt: Date.now()
-    };
-
-    firebase.database().ref("orders/" + userId).set(order).then(() => {
-      location.href = "confirm.html";
-    });
-  };
-
-  async function initLIFF() {
-    await liff.init({ liffId: "2007677925-l15WX11o" });
-    if (!liff.isLoggedIn()) {
-      liff.login();
-    } else {
-      const profile = await liff.getProfile();
-      userId = profile.userId;
-      displayName = profile.displayName;
-
-      firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
-        const order = snapshot.val();
-        if (order && (order.status === "pending" || order.status === "confirmed")) {
-          location.href = "confirm.html";
-        }
-      });
-    }
-  }
-
-  initLIFF();
-</script>
-
+    initLIFF();
+    renderSelector();
+  </script>
 </body>
+
 </html>
