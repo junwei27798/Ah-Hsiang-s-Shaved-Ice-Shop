@@ -225,8 +225,19 @@
       };
 
       firebase.database().ref("orders/" + userId).set(order).then(() => {
-        location.href = "confirm.html";
+        // 傳送訊息給自己
+        fetch("https://script.google.com/macros/s/你的script網址/exec", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(order)
+        }).then(() => {
+          location.href = "confirm.html";
+        }).catch((err) => {
+          console.error("送出訊息失敗", err);
+          location.href = "confirm.html";
+        });
       });
+
     };
 
     async function initLIFF() {
