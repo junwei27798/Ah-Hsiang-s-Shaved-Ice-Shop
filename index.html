@@ -226,16 +226,21 @@
 
       firebase.database().ref("orders/" + userId).set(order).then(() => {
         // 傳送訊息給自己
-        fetch("https://script.google.com/macros/s/AKfycbxDxnhVLhG3vHLyb90YkB6kyI3_N4mXd-8iDqE1avoZjryuRw-LbzqZ5wT9iMbjZrLF/exec", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(order)
-        }).then(() => {
-          location.href = "confirm.html";
-        }).catch((err) => {
-          console.error("送出訊息失敗", err);
-          location.href = "confirm.html";
-        });
+        fetch("https://script.google.com/macros/s/AKfycbyguFrKavKBW-QZRmYZCOii5MuErURoVZ-w8RX5BXbAAzRG7pnz01u9KyIGazPfPJRo/exec", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(order)
+}).then(response => {
+  return response.text();
+}).then(txt => {
+  console.log("GAS 回傳：", txt);
+  location.href = "confirm.html";
+}).catch(err => {
+  console.error("送出訊息失敗", err);
+  alert("送出訂單失敗！");
+  location.href = "confirm.html";
+});
+
       });
 
     };
