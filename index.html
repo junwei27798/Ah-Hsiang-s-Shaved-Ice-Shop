@@ -245,8 +245,35 @@
       };
 
       firebase.database().ref("orders/" + userId).set(order).then(() => {
-        location.href = "confirm.html";
-      });
+  // 計算總金額
+  const totalPrice = iceBowls.reduce((sum, bowl) => sum + calculatePrice(bowl), 0);
+
+  // 整理訊息內容
+  const msgLines = iceBowls.map((bowl, i) => {
+    const base = Object.entries(bowl.baseToppings).map(([k, v]) => `${k}×${v}`).join("、");
+    const extra = Object.entries(bowl.extraToppings).map(([k, v]) => `${k}×${v}`).join("、") || "無";
+    const subTotal = calculatePrice(bowl);
+    return `第 ${i + 1} 碗\n基本：${base}\n額外：${extra}\n小計：$${subTotal}`;
+  }).join("\n\n");
+
+  const notifyMessage = `🍧 有新訂單！\n👤 顧客：${displayName}\n\n${msgLines}\n\n總金額：$${totalPrice}`;
+
+  // 傳送 LINE 推播通知
+  fetch("https://script.google.com/macros/s/你的 Apps Script 網址/exec", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      userId: "U881e6f581fe3d937d6994ae908889712",  // 你的 LINE userId
+      message: notifyMessage
+    })
+  });
+
+  // 導向確認頁面
+  location.href = "confirm.html";
+});
+
     };
 
     async function initLIFF() {
