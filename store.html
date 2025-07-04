@@ -47,19 +47,22 @@
   <div id="orders"></div>
 
   <script>
+    // Firebase 設定
     const firebaseConfig = {
       apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
       authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
       databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
       projectId: "ah-hsiang-s-shaved-ice-shop",
-      storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
+      storageBucket: "ah-hsiang-s-shaved-ice-shop.appspot.com",
       messagingSenderId: "525201397285",
-      appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
-      measurementId: "G-7C7J14C0S6"
+      appId: "1:525201397285:web:7aa0a8c08faabcba1591cc"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const ordersRef = db.ref("orders");
+
+    const notifiedUsers = {}; // 防止重複通知
 
     ordersRef.on("value", (snapshot) => {
       const data = snapshot.val();
@@ -72,7 +75,13 @@
       }
 
       Object.entries(data).forEach(([userId, order]) => {
-        const displayName = order.displayName || userId; // 如果沒有 displayName 則顯示 userId
+        const displayName = order.displayName || userId;
+
+        // ✅ LINE 通知邏輯：只在首次 confirmed 時推播
+        if (order.status === "confirmed" && !notifiedUsers[userId]) {
+          sendLineNotification(order);
+          notifiedUsers[userId] = true;
+        }
 
         const div = document.createElement("div");
         div.className = "order-card";
@@ -103,6 +112,20 @@
       const confirmFinish = confirm(`確定要將此用戶的訂單標記為完成嗎？`);
       if (!confirmFinish) return;
       db.ref("orders/" + userId + "/status").set("done");
+    }
+
+    // ✅ 通知函式：呼叫 Google Apps Script 傳送 LINE 訊息
+    function sendLineNotification(order) {
+      fetch("https://script.google.com/macros/s/你的-GAS-URL/exec", {
+        method: "POST",
+        body: JSON.stringify(order),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => res.json())
+      .then(res => console.log("已發送 LINE 通知", res))
+      .catch(err => console.error("LINE 通知錯誤", err));
     }
   </script>
 </body>
