@@ -226,13 +226,12 @@
 
       firebase.database().ref("orders/" + userId).set(order).then(() => {
         // 傳送訊息給自己
-        fetch("https://script.google.com/macros/s/AKfycbwVQXWu8aT3J8fKBfsuscJhwCreP_kS_2rPBWzwAt5F1K75aWKbrgNZ42HLAK4dmH25/exec", {
-
-  method: "POST",
+        fetch("https://script.google.com/macros/s/AKfycbx8qP2UZy1p5A8tjnj-RLuUkpf62pmYEzXRDjV12tRwe4Jjsbh6sUdAL7LOLgru0XKb/exec", {
+method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(order)
 }).then(res => res.text()).then(txt => {
-  console.log("GAS 回傳訊息：", txt); // ← 看這行
+  console.log("GAS 回傳訊息：", txt);
   location.href = "confirm.html";
 }).catch(err => {
   console.error("送出訊息失敗", err);
