@@ -82,6 +82,51 @@
   </label>
 
   <!-- 配料區略（保持原本不動） -->
+  <h3>基本配料（至少選 4 份）</h3>
+    <div class="topping">紅豆：
+      <div class="qty-controls">
+        <button type="button" data-target="redBean">−</button>
+        <input type="number" id="redBean" min="0" value="0" />
+        <button type="button" data-target="redBean">＋</button>
+      </div>
+    </div>
+    <div class="topping">綠豆：
+      <div class="qty-controls">
+        <button type="button" data-target="greenBean">−</button>
+        <input type="number" id="greenBean" min="0" value="0" />
+        <button type="button" data-target="greenBean">＋</button>
+      </div>
+    </div>
+    <div class="topping">仙草：
+      <div class="qty-controls">
+        <button type="button" data-target="grassJelly">−</button>
+        <input type="number" id="grassJelly" min="0" value="0" />
+        <button type="button" data-target="grassJelly">＋</button>
+      </div>
+    </div>
+    <div class="topping">芋圓：
+      <div class="qty-controls">
+        <button type="button" data-target="taroBall">−</button>
+        <input type="number" id="taroBall" min="0" value="0" />
+        <button type="button" data-target="taroBall">＋</button>
+      </div>
+    </div>
+
+    <h3>額外配料（可選）</h3>
+    <div class="topping">煉乳：
+      <div class="qty-controls">
+        <button type="button" data-target="condensedMilk">−</button>
+        <input type="number" id="condensedMilk" min="0" value="0" />
+        <button type="button" data-target="condensedMilk">＋</button>
+      </div>
+    </div>
+    <div class="topping">巧克力醬：
+      <div class="qty-controls">
+        <button type="button" data-target="chocolateSauce">−</button>
+        <input type="number" id="chocolateSauce" min="0" value="0" />
+        <button type="button" data-target="chocolateSauce">＋</button>
+      </div>
+    </div>
 
   <input type="hidden" name="items" id="itemsInput" />
   <br />
