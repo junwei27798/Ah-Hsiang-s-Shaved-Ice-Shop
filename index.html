@@ -2,36 +2,73 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>剉冰訂單測試 (加減按鈕 + iframe + LIFF)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>剉冰訂單測試 (手機版)</title>
   <style>
-    .topping {
-      margin-bottom: 10px;
+    body {
+      font-family: sans-serif;
+      padding: 16px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    label, .topping {
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      margin-top: 5px;
     }
 
     .qty-controls {
-      display: inline-flex;
+      display: flex;
       align-items: center;
+      margin-top: 8px;
     }
 
     .qty-controls button {
-      width: 28px;
-      height: 28px;
-      font-size: 18px;
-      line-height: 18px;
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      background-color: #ccc;
       cursor: pointer;
+      border-radius: 6px;
     }
 
     .qty-controls input {
-      width: 40px;
+      width: 50px;
       text-align: center;
-      margin: 0 5px;
-      pointer-events: none;
+      margin: 0 10px;
+      font-size: 18px;
+      border: none;
+      background-color: #f0f0f0;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #45a049;
     }
   </style>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-  <h1>剉冰訂單測試 (iframe + LIFF)</h1>
+  <h2>剉冰訂單測試</h2>
 
   <form method="POST"
     action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
@@ -39,7 +76,7 @@
 
     <label>
       訂購人名稱：
-      <input type="text" name="displayName" id="displayName" value="" required readonly />
+      <input type="text" name="displayName" id="displayName" required readonly />
     </label>
 
     <h3>基本配料（至少選 4 份）</h3>
@@ -89,7 +126,6 @@
     </div>
 
     <input type="hidden" name="items" id="itemsInput" />
-
     <br />
     <button type="submit">送出訂單</button>
   </form>
@@ -97,7 +133,7 @@
   <iframe name="hidden_iframe" style="display:none;"></iframe>
 
   <script>
-    const liffId = "2007677925-l15WX11o"; // <-- 換成你自己的 LIFF ID
+    const liffId = "2007677925-l15WX11o"; // 換成你自己的 LIFF ID
 
     const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
     const extraIds = ["condensedMilk", "chocolateSauce"];
@@ -110,7 +146,6 @@
       chocolateSauce: "巧克力醬"
     };
 
-    // LIFF 初始化，填入 displayName
     async function initLiff() {
       await liff.init({ liffId });
       if (!liff.isLoggedIn()) {
@@ -123,7 +158,6 @@
 
     initLiff();
 
-    // 加減邏輯
     document.querySelectorAll("button[data-target]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-target");
@@ -137,7 +171,6 @@
       });
     });
 
-    // 表單送出前：組成 JSON
     document.getElementById("testForm").addEventListener("submit", (e) => {
       const baseToppings = {};
       let baseCount = 0;
