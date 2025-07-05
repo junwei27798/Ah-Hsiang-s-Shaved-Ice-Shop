@@ -127,16 +127,13 @@
 
 <body>
   <h2>歡迎來『阿香來剉冰』點餐！</h2>
-  <p id="welcomeMsg">哈囉～<span id="displayNameSpan"></span>，你今天想吃什麼？基本配料（最多 4 份，可以重複選擇相同的配料唷！）</p>
+  <p id="welcomeMsg">哈囉～<span id="displayNameSpan"></span>，你今天想吃什麼？</p>
 
   <form method="POST"
     action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
     target="hidden_iframe" id="testForm">
 
-    <label>
-      訂購人名稱：
-      <input type="text" name="displayName" id="displayName" required readonly />
-    </label>
+    <!-- 移除訂購人名稱輸入欄位 -->
 
     <h3>基本配料（必須選滿 4 份）</h3>
     <div class="topping">紅豆：
@@ -225,7 +222,6 @@
         liff.login();
       } else {
         const profile = await liff.getProfile();
-        document.getElementById("displayName").value = profile.displayName;
         document.getElementById("displayNameSpan").textContent = profile.displayName;
       }
     }
@@ -272,13 +268,20 @@
     function renderBowls() {
       const bowlList = document.getElementById("bowlList");
       bowlList.innerHTML = "";
+      bowls.forEach((bowl, index)
       bowls.forEach((bowl, index) => {
         const price = calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
         const div = document.createElement("div");
         div.className = "bowl-item";
 
-        let baseDesc = Object.entries(bowl.baseToppings).map(([k, v]) => `${k}*${v}`).join("、");
-        let extraDesc = Object.entries(bowl.extraToppings).map(([k, v]) => `${k}*${v}`).join("、");
+        let baseDesc = Object.entries(bowl.baseToppings)
+          .filter(([_, v]) => v > 0)
+          .map(([k, v]) => `${k}*${v}`)
+          .join("、");
+        let extraDesc = Object.entries(bowl.extraToppings)
+          .filter(([_, v]) => v > 0)
+          .map(([k, v]) => `${k}*${v}`)
+          .join("、");
         if (!extraDesc) extraDesc = "無";
 
         div.innerHTML = `
@@ -326,8 +329,8 @@
       bowls.push({ baseToppings, extraToppings });
 
       // 清空輸入欄
-      baseIds.forEach(id => document.getElementById(id).value = 0);
-      extraIds.forEach(id => document.getElementById(id).value = 0);
+      baseIds.forEach(id => (document.getElementById(id).value = 0));
+      extraIds.forEach(id => (document.getElementById(id).value = 0));
 
       renderBowls();
     });
@@ -349,10 +352,28 @@
         e.preventDefault();
         return;
       }
-      // 把碗列表轉成字串送出
-      document.getElementById("itemsInput").value = JSON.stringify(bowls);
 
-      hasSubmitted = true;
+      // 備註內容
+      const remark = document.getElementById("remark").value;
+
+      // LIFF 取得 displayName，加入訂單資料
+      liff.getProfile().then(profile => {
+        const orderData = {
+          user: profile.displayName,
+          bowls: bowls,
+          remark: remark,
+          timestamp: new Date().toISOString()
+        };
+        document.getElementById("itemsInput").value = JSON.stringify(orderData);
+        hasSubmitted = true;
+        document.getElementById("testForm").submit();
+      }).catch(() => {
+        alert("取得使用者資料失敗，請重新整理頁面。");
+        e.preventDefault();
+      });
+
+      // 防止表單重複送出
+      e.preventDefault();
     });
 
     function handleIframeSubmit() {
