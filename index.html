@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>剉冰訂單測試 (加減按鈕 + iframe)</title>
+  <title>剉冰訂單測試 (加減按鈕 + iframe + LIFF)</title>
   <style>
     .topping {
       margin-bottom: 10px;
@@ -28,46 +28,43 @@
       pointer-events: none;
     }
   </style>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-  <h1>剉冰訂單測試 (iframe 送出)</h1>
+  <h1>剉冰訂單測試 (iframe + LIFF)</h1>
 
   <form method="POST"
     action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
     target="hidden_iframe" id="testForm">
-    
+
     <label>
       訂購人名稱：
-      <input type="text" name="displayName" value="測試用戶" required />
+      <input type="text" name="displayName" id="displayName" value="" required readonly />
     </label>
 
     <h3>基本配料（至少選 4 份）</h3>
-    <div class="topping">
-      紅豆：
+    <div class="topping">紅豆：
       <div class="qty-controls">
         <button type="button" data-target="redBean">−</button>
         <input type="number" id="redBean" min="0" value="0" />
         <button type="button" data-target="redBean">＋</button>
       </div>
     </div>
-    <div class="topping">
-      綠豆：
+    <div class="topping">綠豆：
       <div class="qty-controls">
         <button type="button" data-target="greenBean">−</button>
         <input type="number" id="greenBean" min="0" value="0" />
         <button type="button" data-target="greenBean">＋</button>
       </div>
     </div>
-    <div class="topping">
-      仙草：
+    <div class="topping">仙草：
       <div class="qty-controls">
         <button type="button" data-target="grassJelly">−</button>
         <input type="number" id="grassJelly" min="0" value="0" />
         <button type="button" data-target="grassJelly">＋</button>
       </div>
     </div>
-    <div class="topping">
-      芋圓：
+    <div class="topping">芋圓：
       <div class="qty-controls">
         <button type="button" data-target="taroBall">−</button>
         <input type="number" id="taroBall" min="0" value="0" />
@@ -76,16 +73,14 @@
     </div>
 
     <h3>額外配料（可選）</h3>
-    <div class="topping">
-      煉乳：
+    <div class="topping">煉乳：
       <div class="qty-controls">
         <button type="button" data-target="condensedMilk">−</button>
         <input type="number" id="condensedMilk" min="0" value="0" />
         <button type="button" data-target="condensedMilk">＋</button>
       </div>
     </div>
-    <div class="topping">
-      巧克力醬：
+    <div class="topping">巧克力醬：
       <div class="qty-controls">
         <button type="button" data-target="chocolateSauce">−</button>
         <input type="number" id="chocolateSauce" min="0" value="0" />
@@ -93,17 +88,17 @@
       </div>
     </div>
 
-    <!-- 隱藏欄位：items -->
     <input type="hidden" name="items" id="itemsInput" />
 
     <br />
-    <button type="submit">送出測試訂單</button>
+    <button type="submit">送出訂單</button>
   </form>
 
-  <!-- 隱藏 iframe -->
   <iframe name="hidden_iframe" style="display:none;"></iframe>
 
   <script>
+    const liffId = "2007677925-l15WX11o"; // <-- 換成你自己的 LIFF ID
+
     const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
     const extraIds = ["condensedMilk", "chocolateSauce"];
     const idToName = {
@@ -115,7 +110,20 @@
       chocolateSauce: "巧克力醬"
     };
 
-    // 加減按鈕
+    // LIFF 初始化，填入 displayName
+    async function initLiff() {
+      await liff.init({ liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+      } else {
+        const profile = await liff.getProfile();
+        document.getElementById("displayName").value = profile.displayName;
+      }
+    }
+
+    initLiff();
+
+    // 加減邏輯
     document.querySelectorAll("button[data-target]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-target");
@@ -129,7 +137,7 @@
       });
     });
 
-    // 表單送出前，組成 JSON
+    // 表單送出前：組成 JSON
     document.getElementById("testForm").addEventListener("submit", (e) => {
       const baseToppings = {};
       let baseCount = 0;
@@ -157,7 +165,6 @@
 
       const bowl = { baseToppings, extraToppings };
       const items = [bowl];
-
       document.getElementById("itemsInput").value = JSON.stringify(items);
     });
   </script>
