@@ -70,136 +70,105 @@
 <body>
   <h2>剉冰訂單測試</h2>
 
-  <form method="POST"
-    action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
-    target="hidden_iframe" id="testForm">
+  <!-- (上半部保留不動，直接從 <form> 開始接) -->
 
-    <label>
-      訂購人名稱：
-      <input type="text" name="displayName" id="displayName" required readonly />
-    </label>
+<form method="POST"
+  action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
+  target="hidden_iframe" id="testForm">
 
-    <h3>基本配料（至少選 4 份）</h3>
-    <div class="topping">紅豆：
-      <div class="qty-controls">
-        <button type="button" data-target="redBean">−</button>
-        <input type="number" id="redBean" min="0" value="0" />
-        <button type="button" data-target="redBean">＋</button>
-      </div>
-    </div>
-    <div class="topping">綠豆：
-      <div class="qty-controls">
-        <button type="button" data-target="greenBean">−</button>
-        <input type="number" id="greenBean" min="0" value="0" />
-        <button type="button" data-target="greenBean">＋</button>
-      </div>
-    </div>
-    <div class="topping">仙草：
-      <div class="qty-controls">
-        <button type="button" data-target="grassJelly">−</button>
-        <input type="number" id="grassJelly" min="0" value="0" />
-        <button type="button" data-target="grassJelly">＋</button>
-      </div>
-    </div>
-    <div class="topping">芋圓：
-      <div class="qty-controls">
-        <button type="button" data-target="taroBall">−</button>
-        <input type="number" id="taroBall" min="0" value="0" />
-        <button type="button" data-target="taroBall">＋</button>
-      </div>
-    </div>
+  <label>
+    訂購人名稱：
+    <input type="text" name="displayName" id="displayName" required readonly />
+  </label>
 
-    <h3>額外配料（可選）</h3>
-    <div class="topping">煉乳：
-      <div class="qty-controls">
-        <button type="button" data-target="condensedMilk">−</button>
-        <input type="number" id="condensedMilk" min="0" value="0" />
-        <button type="button" data-target="condensedMilk">＋</button>
-      </div>
-    </div>
-    <div class="topping">巧克力醬：
-      <div class="qty-controls">
-        <button type="button" data-target="chocolateSauce">−</button>
-        <input type="number" id="chocolateSauce" min="0" value="0" />
-        <button type="button" data-target="chocolateSauce">＋</button>
-      </div>
-    </div>
+  <!-- 配料區略（保持原本不動） -->
 
-    <input type="hidden" name="items" id="itemsInput" />
-    <br />
-    <button type="submit">送出訂單</button>
-  </form>
+  <input type="hidden" name="items" id="itemsInput" />
+  <br />
+  <button type="submit">送出訂單</button>
+</form>
 
-  <iframe name="hidden_iframe" style="display:none;"></iframe>
+<!-- ✅ 新增成功訊息 -->
+<div id="successMessage" style="display:none; margin-top: 20px; font-size: 18px; color: green;">
+  ✅ 訂單已送出！
+</div>
 
-  <script>
-    const liffId = "2007677925-l15WX11o"; // 換成你自己的 LIFF ID
+<iframe name="hidden_iframe" style="display:none;"></iframe>
 
-    const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
-    const extraIds = ["condensedMilk", "chocolateSauce"];
-    const idToName = {
-      redBean: "紅豆",
-      greenBean: "綠豆",
-      grassJelly: "仙草",
-      taroBall: "芋圓",
-      condensedMilk: "煉乳",
-      chocolateSauce: "巧克力醬"
-    };
+<script>
+  const liffId = "2007677925-l15WX11o";
 
-    async function initLiff() {
-      await liff.init({ liffId });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-      } else {
-        const profile = await liff.getProfile();
-        document.getElementById("displayName").value = profile.displayName;
+  const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
+  const extraIds = ["condensedMilk", "chocolateSauce"];
+  const idToName = {
+    redBean: "紅豆",
+    greenBean: "綠豆",
+    grassJelly: "仙草",
+    taroBall: "芋圓",
+    condensedMilk: "煉乳",
+    chocolateSauce: "巧克力醬"
+  };
+
+  async function initLiff() {
+    await liff.init({ liffId });
+    if (!liff.isLoggedIn()) {
+      liff.login();
+    } else {
+      const profile = await liff.getProfile();
+      document.getElementById("displayName").value = profile.displayName;
+    }
+  }
+
+  initLiff();
+
+  document.querySelectorAll("button[data-target]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-target");
+      const input = document.getElementById(id);
+      let val = parseInt(input.value) || 0;
+      if (btn.textContent === "＋") {
+        input.value = val + 1;
+      } else if (btn.textContent === "−") {
+        if (val > 0) input.value = val - 1;
       }
+    });
+  });
+
+  document.getElementById("testForm").addEventListener("submit", (e) => {
+    const baseToppings = {};
+    let baseCount = 0;
+    baseIds.forEach(id => {
+      const qty = parseInt(document.getElementById(id).value) || 0;
+      if (qty > 0) {
+        baseToppings[idToName[id]] = qty;
+        baseCount += qty;
+      }
+    });
+
+    if (baseCount < 4) {
+      alert("基本配料至少選 4 份！");
+      e.preventDefault();
+      return;
     }
 
-    initLiff();
-
-    document.querySelectorAll("button[data-target]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-target");
-        const input = document.getElementById(id);
-        let val = parseInt(input.value) || 0;
-        if (btn.textContent === "＋") {
-          input.value = val + 1;
-        } else if (btn.textContent === "−") {
-          if (val > 0) input.value = val - 1;
-        }
-      });
-    });
-
-    document.getElementById("testForm").addEventListener("submit", (e) => {
-      const baseToppings = {};
-      let baseCount = 0;
-      baseIds.forEach(id => {
-        const qty = parseInt(document.getElementById(id).value) || 0;
-        if (qty > 0) {
-          baseToppings[idToName[id]] = qty;
-          baseCount += qty;
-        }
-      });
-
-      if (baseCount < 4) {
-        alert("基本配料至少選 4 份！");
-        e.preventDefault();
-        return;
+    const extraToppings = {};
+    extraIds.forEach(id => {
+      const qty = parseInt(document.getElementById(id).value) || 0;
+      if (qty > 0) {
+        extraToppings[idToName[id]] = qty;
       }
-
-      const extraToppings = {};
-      extraIds.forEach(id => {
-        const qty = parseInt(document.getElementById(id).value) || 0;
-        if (qty > 0) {
-          extraToppings[idToName[id]] = qty;
-        }
-      });
-
-      const bowl = { baseToppings, extraToppings };
-      const items = [bowl];
-      document.getElementById("itemsInput").value = JSON.stringify(items);
     });
-  </script>
+
+    const bowl = { baseToppings, extraToppings };
+    const items = [bowl];
+    document.getElementById("itemsInput").value = JSON.stringify(items);
+
+    // ✅ 顯示送出成功訊息（延遲一點讓表單有時間送出）
+    setTimeout(() => {
+      document.getElementById("successMessage").style.display = "block";
+    }, 1500); // 可視網路狀況調整延遲時間
+  });
+</script>
+
 </body>
 </html>
