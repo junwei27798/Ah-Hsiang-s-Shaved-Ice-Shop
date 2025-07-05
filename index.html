@@ -2,97 +2,167 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>剉冰點餐</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>剉冰訂單（加減號調整）</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #fffde7; }
-    .section { margin-bottom: 20px; }
-    button { padding: 10px 20px; margin-top: 10px; }
+    .topping {
+      margin-bottom: 10px;
+    }
+    .topping label {
+      display: inline-block;
+      width: 80px;
+    }
+    .qty-controls {
+      display: inline-flex;
+      align-items: center;
+    }
+    .qty-controls button {
+      width: 28px;
+      height: 28px;
+      font-size: 20px;
+      line-height: 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .qty-controls input[type="number"] {
+      width: 40px;
+      text-align: center;
+      margin: 0 5px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <h1>剉冰點餐</h1>
-  <div id="selector" class="section"></div>
-  <button id="add-bowl">➕ 加入這碗</button>
-  <div id="order" class="section"></div>
-  <button id="submit">✅ 送出訂單</button>
+  <h1>剉冰訂單表單</h1>
+
+  <form id="orderForm" method="POST" target="hidden_iframe" action="https://script.google.com/macros/s/AKfycbzEJ_Z-QY9Of3tpzCLck-gqC5h5WZx836RD0V6AiDMjbv7q_vMiwMOk6r_d7PRLvPRZ/exec">
+    <label>
+      訂購人名字：
+      <input type="text" name="displayName" value="測試用戶" required />
+    </label>
+    <br /><br />
+
+    <fieldset>
+      <legend>基本配料 (必選)</legend>
+
+      <div class="topping">
+        <label for="redBean">紅豆</label>
+        <div class="qty-controls">
+          <button type="button" data-target="redBean">−</button>
+          <input type="number" id="redBean" min="0" value="0" readonly name="redBean" />
+          <button type="button" data-target="redBean">＋</button>
+        </div>
+      </div>
+
+      <div class="topping">
+        <label for="greenBean">綠豆</label>
+        <div class="qty-controls">
+          <button type="button" data-target="greenBean">−</button>
+          <input type="number" id="greenBean" min="0" value="0" readonly name="greenBean" />
+          <button type="button" data-target="greenBean">＋</button>
+        </div>
+      </div>
+
+      <div class="topping">
+        <label for="grassJelly">仙草</label>
+        <div class="qty-controls">
+          <button type="button" data-target="grassJelly">−</button>
+          <input type="number" id="grassJelly" min="0" value="0" readonly name="grassJelly" />
+          <button type="button" data-target="grassJelly">＋</button>
+        </div>
+      </div>
+
+      <div class="topping">
+        <label for="taroBall">芋圓</label>
+        <div class="qty-controls">
+          <button type="button" data-target="taroBall">−</button>
+          <input type="number" id="taroBall" min="0" value="0" readonly name="taroBall" />
+          <button type="button" data-target="taroBall">＋</button>
+        </div>
+      </div>
+    </fieldset>
+
+    <br />
+
+    <fieldset>
+      <legend>額外配料 (可選)</legend>
+
+      <div class="topping">
+        <label for="condensedMilk">煉乳</label>
+        <div class="qty-controls">
+          <button type="button" data-target="condensedMilk">−</button>
+          <input type="number" id="condensedMilk" min="0" value="0" readonly name="condensedMilk" />
+          <button type="button" data-target="condensedMilk">＋</button>
+        </div>
+      </div>
+
+      <div class="topping">
+        <label for="chocolateSauce">巧克力醬</label>
+        <div class="qty-controls">
+          <button type="button" data-target="chocolateSauce">−</button>
+          <input type="number" id="chocolateSauce" min="0" value="0" readonly name="chocolateSauce" />
+          <button type="button" data-target="chocolateSauce">＋</button>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- 隱藏欄位放 JSON -->
+    <input type="hidden" name="items" id="itemsInput" />
+
+    <br />
+    <button type="submit">送出訂單</button>
+  </form>
+
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
 
   <script>
-    const baseToppings = ["紅豆", "綠豆", "粉圓", "花生"];
-    const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
-    let displayName = "";
-    let iceBowls = [];
-    let currentBowl = { base: {}, extra: {} };
-
-    function renderSelector() {
-      const div = document.getElementById("selector");
-      div.innerHTML = `<h3>選擇基本配料（剛好4份）</h3>`;
-      baseToppings.forEach(t => {
-        div.innerHTML += `${t} <button onclick="update('base','${t}',-1)">-</button> ${currentBowl.base[t] || 0} <button onclick="update('base','${t}',1)">+</button><br>`;
+    // 加減號按鈕事件
+    document.querySelectorAll(".qty-controls button").forEach(button => {
+      button.addEventListener("click", () => {
+        const targetId = button.getAttribute("data-target");
+        const input = document.getElementById(targetId);
+        let currentValue = parseInt(input.value) || 0;
+        if (button.textContent === "＋") {
+          input.value = currentValue + 1;
+        } else if (button.textContent === "−") {
+          if (currentValue > 0) {
+            input.value = currentValue - 1;
+          }
+        }
       });
-      div.innerHTML += `<h3>額外配料（每份+5元）</h3>`;
-      extraToppings.forEach(t => {
-        div.innerHTML += `${t} <button onclick="update('extra','${t}',-1)">-</button> ${currentBowl.extra[t] || 0} <button onclick="update('extra','${t}',1)">+</button><br>`;
-      });
-    }
+    });
 
-    function update(type, name, delta) {
-      const obj = type === "base" ? currentBowl.base : currentBowl.extra;
-      const val = (obj[name] || 0) + delta;
-      if (val < 0) return;
-      if (type === "base") {
-        const total = Object.values(currentBowl.base).reduce((a,b)=>a+b,0);
-        if (delta > 0 && total >= 4) return;
+    // 表單送出前包裝 JSON 放到隱藏欄位
+    document.getElementById("orderForm").addEventListener("submit", function (e) {
+      const baseToppings = {
+        "紅豆": Number(document.getElementById("redBean").value),
+        "綠豆": Number(document.getElementById("greenBean").value),
+        "仙草": Number(document.getElementById("grassJelly").value),
+        "芋圓": Number(document.getElementById("taroBall").value),
+      };
+
+      for (const key in baseToppings) {
+        if (baseToppings[key] === 0) delete baseToppings[key];
       }
-      obj[name] = val;
-      renderSelector();
-    }
 
-    function renderOrder() {
-      const div = document.getElementById("order");
-      div.innerHTML = "";
-      iceBowls.forEach((bowl, i) => {
-        const base = Object.entries(bowl.base).map(([k,v]) => `${k}×${v}`).join("、");
-        const extra = Object.entries(bowl.extra).map(([k,v]) => `${k}×${v}`).join("、") || "無";
-        div.innerHTML += `<p>🍧 第${i+1}碗<br>基本：${base}<br>額外：${extra}</p>`;
-      });
-    }
+      const extraToppings = {
+        "煉乳": Number(document.getElementById("condensedMilk").value),
+        "巧克力醬": Number(document.getElementById("chocolateSauce").value),
+      };
 
-    document.getElementById("add-bowl").onclick = () => {
-      const total = Object.values(currentBowl.base).reduce((a,b)=>a+b,0);
-      if (total !== 4) return alert("基本配料需剛好 4 份！");
-      iceBowls.push(JSON.parse(JSON.stringify(currentBowl)));
-      currentBowl = { base: {}, extra: {} };
-      renderSelector();
-      renderOrder();
-    };
+      for (const key in extraToppings) {
+        if (extraToppings[key] === 0) delete extraToppings[key];
+      }
 
-    document.getElementById("submit").onclick = () => {
-      if (!iceBowls.length) return alert("請至少加入一碗剉冰！");
-      fetch("https://script.google.com/macros/s/AKfycbxVABFDadhqB8EYObIFQ1XaqQ3pfobenUmZ6DWngYf46L9X4QSxMQqqBUMcn_ZQ0iHr/exec", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayName, items: iceBowls })
-      }).then(res => res.text())
-        .then(txt => {
-          alert("訂單已送出！");
-          location.reload();
-        }).catch(err => {
-          alert("送出失敗！");
-          console.error(err);
-        });
-    };
+      const items = [
+        {
+          baseToppings: baseToppings,
+          extraToppings: extraToppings,
+        },
+      ];
 
-    async function init() {
-      await liff.init({ liffId: "你的 LIFF ID" });
-      if (!liff.isLoggedIn()) liff.login();
-      const profile = await liff.getProfile();
-      displayName = profile.displayName;
-    }
-
-    init();
-    renderSelector();
+      document.getElementById("itemsInput").value = JSON.stringify(items);
+    });
   </script>
 </body>
 </html>
