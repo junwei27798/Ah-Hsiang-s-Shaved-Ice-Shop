@@ -226,7 +226,7 @@
 
       firebase.database().ref("orders/" + userId).set(order).then(() => {
         // 傳送訊息給自己
-        fetch("https://script.google.com/macros/s/AKfycbw794iudHOfZlF4Ud1yXEh4oq_oV25rCh1MXSKGlhiIRQFMf2zouBA48xi15VPed9rO/exec", {
+        fetch("https://script.google.com/macros/s/AKfycbzDhdZk8BvlNPT5U4tLEGrBWQUbPpptOc9JFAuHAZpIcj6Se6bZY-eH-MeZlyz9fKYZ/exec", {
 method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(order)
