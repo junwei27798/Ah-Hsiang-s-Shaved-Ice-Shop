@@ -3,8 +3,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>歡迎來『阿香來剉冰』點餐！</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>剉冰訂單測試 (手機版)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -116,24 +116,21 @@
       margin-top: 10px;
       text-align: right;
     }
-
-    #welcomeMsg {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
   </style>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
 <body>
-  <h2>歡迎來『阿香來剉冰』點餐！</h2>
-  <p id="welcomeMsg">哈囉～<span id="displayNameSpan"></span>，你今天想吃什麼？</p>
+  <h2>剉冰訂單測試</h2>
 
   <form method="POST"
     action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
     target="hidden_iframe" id="testForm">
 
-    <!-- 移除訂購人名稱輸入欄位 -->
+    <label>
+      訂購人名稱：
+      <input type="text" name="displayName" id="displayName" required readonly />
+    </label>
 
     <h3>基本配料（必須選滿 4 份）</h3>
     <div class="topping">紅豆：
@@ -198,7 +195,7 @@
   <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe" onload="handleIframeSubmit()"></iframe>
 
   <script>
-    const liffId = "2007677925-l15WX11o"; // 替換成你的 LIFF ID
+    const liffId = "2007677925-l15WX11o"; // 替換成你自己的 LIFF ID
     let hasSubmitted = false;
 
     const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
@@ -222,7 +219,7 @@
         liff.login();
       } else {
         const profile = await liff.getProfile();
-        document.getElementById("displayNameSpan").textContent = profile.displayName;
+        document.getElementById("displayName").value = profile.displayName;
       }
     }
 
@@ -257,6 +254,7 @@
       });
     });
 
+
     function calculateBowlPrice(baseToppings, extraToppings) {
       let extraCount = 0;
       for (const key in extraToppings) {
@@ -266,40 +264,33 @@
     }
 
     function renderBowls() {
-  const bowlList = document.getElementById("bowlList");
-  bowlList.innerHTML = "";
-  bowls.forEach((bowl, index) => {
-    const price = calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
-    const div = document.createElement("div");
-    div.className = "bowl-item";
+      const bowlList = document.getElementById("bowlList");
+      bowlList.innerHTML = "";
+      bowls.forEach((bowl, index) => {
+        const price = calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
+        const div = document.createElement("div");
+        div.className = "bowl-item";
 
-    let baseDesc = Object.entries(bowl.baseToppings)
-      .filter(([_, v]) => v > 0)
-      .map(([k, v]) => `${k}*${v}`)
-      .join("、");
-    let extraDesc = Object.entries(bowl.extraToppings)
-      .filter(([_, v]) => v > 0)
-      .map(([k, v]) => `${k}*${v}`)
-      .join("、");
-    if (!extraDesc) extraDesc = "無";
+        let baseDesc = Object.entries(bowl.baseToppings).map(([k, v]) => `${k}*${v}`).join("、");
+        let extraDesc = Object.entries(bowl.extraToppings).map(([k, v]) => `${k}*${v}`).join("、");
+        if (!extraDesc) extraDesc = "無";
 
-    div.innerHTML = `
-      <h4>第 ${index + 1} 碗 - 小計：${price} 元
-        <button type="button" class="delete-btn" data-index="${index}">刪除</button>
-      </h4>
-      <div>基本配料：${baseDesc}</div>
-      <div>額外配料：${extraDesc}</div>
-    `;
-    bowlList.appendChild(div);
-  });
+        div.innerHTML = `
+          <h4>第 ${index + 1} 碗 - 小計：${price} 元
+            <button type="button" class="delete-btn" data-index="${index}">刪除</button>
+          </h4>
+          <div>基本配料：${baseDesc}</div>
+          <div>額外配料：${extraDesc}</div>
+        `;
+        bowlList.appendChild(div);
+      });
 
-  // 總金額
-  const totalPrice = bowls.reduce((sum, bowl) => {
-    return sum + calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
-  }, 0);
-  document.getElementById("totalPrice").textContent = `總金額：${totalPrice} 元`;
-}
-
+      // 總金額
+      const totalPrice = bowls.reduce((sum, bowl) => {
+        return sum + calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
+      }, 0);
+      document.getElementById("totalPrice").textContent = `總金額：${totalPrice} 元`;
+    }
 
     document.getElementById("addBowlBtn").addEventListener("click", () => {
       // 讀取配料數量
@@ -329,8 +320,8 @@
       bowls.push({ baseToppings, extraToppings });
 
       // 清空輸入欄
-      baseIds.forEach(id => (document.getElementById(id).value = 0));
-      extraIds.forEach(id => (document.getElementById(id).value = 0));
+      baseIds.forEach(id => document.getElementById(id).value = 0);
+      extraIds.forEach(id => document.getElementById(id).value = 0);
 
       renderBowls();
     });
@@ -352,28 +343,10 @@
         e.preventDefault();
         return;
       }
+      // 把碗列表轉成字串送出
+      document.getElementById("itemsInput").value = JSON.stringify(bowls);
 
-      // 備註內容
-      const remark = document.getElementById("remark").value;
-
-      // LIFF 取得 displayName，加入訂單資料
-      liff.getProfile().then(profile => {
-        const orderData = {
-          user: profile.displayName,
-          bowls: bowls,
-          remark: remark,
-          timestamp: new Date().toISOString()
-        };
-        document.getElementById("itemsInput").value = JSON.stringify(orderData);
-        hasSubmitted = true;
-        document.getElementById("testForm").submit();
-      }).catch(() => {
-        alert("取得使用者資料失敗，請重新整理頁面。");
-        e.preventDefault();
-      });
-
-      // 防止表單重複送出
-      e.preventDefault();
+      hasSubmitted = true;
     });
 
     function handleIframeSubmit() {
