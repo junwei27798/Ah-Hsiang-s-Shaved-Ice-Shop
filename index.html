@@ -351,7 +351,360 @@
 
     function handleIframeSubmit() {
       if (hasSubmitted) {
+        alert("訂單已送出！");<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>阿香來剉冰</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 16px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    label,
+    .topping {
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .qty-controls button {
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      background-color: #ccc;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .qty-controls input {
+      width: 50px;
+      text-align: center;
+      margin: 0 10px;
+      font-size: 18px;
+      border: none;
+      background-color: #f0f0f0;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button[type="submit"],
+    #addBowlBtn {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    button[type="submit"]:hover,
+    #addBowlBtn:hover {
+      background-color: #45a049;
+    }
+
+    #bowlList {
+      margin-top: 30px;
+      border-top: 2px solid #444;
+      padding-top: 10px;
+    }
+
+    .bowl-item {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .bowl-item h4 {
+      margin: 0 0 5px 0;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #f44336;
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    #totalPrice {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 10px;
+      text-align: right;
+    }
+  </style>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+  <form method="POST"
+    action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
+    target="hidden_iframe" id="testForm">
+
+    <h3>基本配料</h3>
+    <div class="topping">紅豆：
+      <div class="qty-controls">
+        <button type="button" data-target="redBean">−</button>
+        <input type="number" id="redBean" min="0" value="0" />
+        <button type="button" data-target="redBean">＋</button>
+      </div>
+    </div>
+    <div class="topping">綠豆：
+      <div class="qty-controls">
+        <button type="button" data-target="greenBean">−</button>
+        <input type="number" id="greenBean" min="0" value="0" />
+        <button type="button" data-target="greenBean">＋</button>
+      </div>
+    </div>
+    <div class="topping">仙草：
+      <div class="qty-controls">
+        <button type="button" data-target="grassJelly">−</button>
+        <input type="number" id="grassJelly" min="0" value="0" />
+        <button type="button" data-target="grassJelly">＋</button>
+      </div>
+    </div>
+    <div class="topping">芋圓：
+      <div class="qty-controls">
+        <button type="button" data-target="taroBall">−</button>
+        <input type="number" id="taroBall" min="0" value="0" />
+        <button type="button" data-target="taroBall">＋</button>
+      </div>
+    </div>
+
+    <h3>額外配料（可選）</h3>
+    <div class="topping">煉乳：
+      <div class="qty-controls">
+        <button type="button" data-target="condensedMilk">−</button>
+        <input type="number" id="condensedMilk" min="0" value="0" />
+        <button type="button" data-target="condensedMilk">＋</button>
+      </div>
+    </div>
+    <div class="topping">巧克力醬：
+      <div class="qty-controls">
+        <button type="button" data-target="chocolateSauce">−</button>
+        <input type="number" id="chocolateSauce" min="0" value="0" />
+        <button type="button" data-target="chocolateSauce">＋</button>
+      </div>
+    </div>
+
+    <button type="button" id="addBowlBtn">新增這碗</button>
+
+    <label>
+      備註：
+      <textarea id="remark" name="remark"></textarea>
+    </label>
+
+    <div id="bowlList"></div>
+    <div id="totalPrice">總金額：0 元</div>
+
+    <input type="hidden" name="items" id="itemsInput" />
+    <button type="submit">送出訂單</button>
+  </form>
+
+  <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe" onload="handleIframeSubmit()"></iframe>
+
+  <script>
+    const liffId = "2007677925-l15WX11o"; // 替換成你自己的 LIFF ID
+    let hasSubmitted = false;
+
+    const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
+    const extraIds = ["condensedMilk", "chocolateSauce"];
+    const idToName = {
+      redBean: "紅豆",
+      greenBean: "綠豆",
+      grassJelly: "仙草",
+      taroBall: "芋圓",
+      condensedMilk: "煉乳",
+      chocolateSauce: "巧克力醬"
+    };
+    const BASE_PRICE = 60;
+    const EXTRA_PRICE = 5;
+
+    let bowls = [];
+
+    async function initLiff() {
+      await liff.init({ liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+      } else {
+        const profile = await liff.getProfile();
+        document.getElementById("displayName").value = profile.displayName;
+      }
+    }
+
+    initLiff();
+
+    document.querySelectorAll("button[data-target]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-target");
+        const input = document.getElementById(id);
+        let val = parseInt(input.value) || 0;
+
+        if (btn.textContent === "＋") {
+          // 計算基本配料總數（加上這次的+1）
+          if (baseIds.includes(id)) {
+            let totalBaseCount = baseIds.reduce((sum, baseId) => {
+              if (baseId === id) {
+                return sum + val + 1;
+              } else {
+                return sum + (parseInt(document.getElementById(baseId).value) || 0);
+              }
+            }, 0);
+
+            if (totalBaseCount > 4) {
+              alert("最多只能選四種唷！");
+              return; // 阻止再加
+            }
+          }
+          input.value = val + 1;
+        } else if (btn.textContent === "−") {
+          if (val > 0) input.value = val - 1;
+        }
+      });
+    });
+
+
+    function calculateBowlPrice(baseToppings, extraToppings) {
+      let extraCount = 0;
+      for (const key in extraToppings) {
+        extraCount += extraToppings[key];
+      }
+      return BASE_PRICE + extraCount * EXTRA_PRICE;
+    }
+
+    function renderBowls() {
+      const bowlList = document.getElementById("bowlList");
+      bowlList.innerHTML = "";
+      bowls.forEach((bowl, index) => {
+        const price = calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
+        const div = document.createElement("div");
+        div.className = "bowl-item";
+
+        let baseDesc = Object.entries(bowl.baseToppings).map(([k, v]) => `${k}*${v}`).join("、");
+        let extraDesc = Object.entries(bowl.extraToppings).map(([k, v]) => `${k}*${v}`).join("、");
+        if (!extraDesc) extraDesc = "無";
+
+        div.innerHTML = `
+          <h4>第 ${index + 1} 碗 - 小計：${price} 元
+            <button type="button" class="delete-btn" data-index="${index}">刪除</button>
+          </h4>
+          <div>基本配料：${baseDesc}</div>
+          <div>額外配料：${extraDesc}</div>
+        `;
+        bowlList.appendChild(div);
+      });
+
+      // 總金額
+      const totalPrice = bowls.reduce((sum, bowl) => {
+        return sum + calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
+      }, 0);
+      document.getElementById("totalPrice").textContent = `總金額：${totalPrice} 元`;
+    }
+
+    document.getElementById("addBowlBtn").addEventListener("click", () => {
+      // 讀取配料數量
+      let baseToppings = {};
+      let baseCount = 0;
+      baseIds.forEach(id => {
+        const qty = parseInt(document.getElementById(id).value) || 0;
+        baseToppings[idToName[id]] = qty;
+        baseCount += qty;
+      });
+      // 檢查基本配料數量是否等於4
+      if (baseCount !== 4) {
+        alert("最多選 4 種唷！需要再加料請往下選～");
+        return;
+      }
+
+      // 額外配料
+      let extraToppings = {};
+      extraIds.forEach(id => {
+        const qty = parseInt(document.getElementById(id).value) || 0;
+        if (qty > 0) {
+          extraToppings[idToName[id]] = qty;
+        }
+      });
+
+      // 加入碗陣列
+      bowls.push({ baseToppings, extraToppings });
+
+      // 清空輸入欄
+      baseIds.forEach(id => document.getElementById(id).value = 0);
+      extraIds.forEach(id => document.getElementById(id).value = 0);
+
+      renderBowls();
+    });
+
+    // 刪除碗
+    document.getElementById("bowlList").addEventListener("click", (e) => {
+      if (e.target.classList.contains("delete-btn")) {
+        const index = parseInt(e.target.getAttribute("data-index"));
+        if (!isNaN(index)) {
+          bowls.splice(index, 1);
+          renderBowls();
+        }
+      }
+    });
+
+    document.getElementById("testForm").addEventListener("submit", (e) => {
+      if (bowls.length === 0) {
+        alert("請至少新增一碗冰！");
+        e.preventDefault();
+        return;
+      }
+      // 把碗列表轉成字串送出
+      document.getElementById("itemsInput").value = JSON.stringify(bowls);
+
+      hasSubmitted = true;
+    });
+
+    function handleIframeSubmit() {
+      if (hasSubmitted) {
         alert("訂單已送出！");
+        window.location.href = "order-confirm.html";
+      }
+    }
+  </script>
+</body>
+
+</html>
         window.location.href = "order-confirm.html";
       }
     }
