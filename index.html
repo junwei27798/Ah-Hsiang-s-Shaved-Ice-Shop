@@ -226,17 +226,34 @@
     initLiff();
 
     document.querySelectorAll("button[data-target]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-target");
-        const input = document.getElementById(id);
-        let val = parseInt(input.value) || 0;
-        if (btn.textContent === "＋") {
-          input.value = val + 1;
-        } else if (btn.textContent === "−") {
-          if (val > 0) input.value = val - 1;
+  btn.addEventListener("click", () => {
+    const id = btn.getAttribute("data-target");
+    const input = document.getElementById(id);
+    let val = parseInt(input.value) || 0;
+
+    if (btn.textContent === "＋") {
+      // 計算基本配料總數（加上這次的+1）
+      if (baseIds.includes(id)) {
+        let totalBaseCount = baseIds.reduce((sum, baseId) => {
+          if (baseId === id) {
+            return sum + val + 1;
+          } else {
+            return sum + (parseInt(document.getElementById(baseId).value) || 0);
+          }
+        }, 0);
+
+        if (totalBaseCount > 4) {
+          alert("最多只能選四種唷！");
+          return; // 阻止再加
         }
-      });
-    });
+      }
+      input.value = val + 1;
+    } else if (btn.textContent === "−") {
+      if (val > 0) input.value = val - 1;
+    }
+  });
+});
+
 
     function calculateBowlPrice(baseToppings, extraToppings) {
       let extraCount = 0;
