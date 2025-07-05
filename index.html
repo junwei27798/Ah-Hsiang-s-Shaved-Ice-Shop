@@ -1,36 +1,98 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>剉冰下單表單</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>剉冰點餐</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #fffde7; }
+    .section { margin-bottom: 20px; }
+    button { padding: 10px 20px; margin-top: 10px; }
+  </style>
 </head>
 <body>
-  <h1>剉冰下單</h1>
-
-  <form action="https://script.google.com/macros/s/AKfycbwHBgkd_PN90_b-d6qiMbcfwzKkmSF0fRemLyafQLB9mzDEkUS2U-NHELW1M14VXX1m/exec" method="POST" target="hidden_iframe" onsubmit="return handleSubmit();">
-    <input type="hidden" name="displayName" value="測試用戶" />
-
-    <label>基本配料（JSON 格式）：</label><br />
-    <textarea name="baseToppings" rows="2" cols="40">
-{"紅豆": 2, "綠豆": 1}
-    </textarea><br /><br />
-
-    <label>額外配料（JSON 格式）：</label><br />
-    <textarea name="extraToppings" rows="2" cols="40">
-{"芋圓": 1}
-    </textarea><br /><br />
-
-    <button type="submit">送出訂單</button>
-  </form>
-
-  <!-- 隱藏 iframe 接收返回結果，避免畫面跳轉 -->
-  <iframe name="hidden_iframe" style="display:none;"></iframe>
+  <h1>剉冰點餐</h1>
+  <div id="selector" class="section"></div>
+  <button id="add-bowl">➕ 加入這碗</button>
+  <div id="order" class="section"></div>
+  <button id="submit">✅ 送出訂單</button>
 
   <script>
-    function handleSubmit() {
-      alert("訂單已送出！LINE 訊息將傳送給你");
-      return true;
+    const baseToppings = ["紅豆", "綠豆", "粉圓", "花生"];
+    const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
+    let displayName = "";
+    let iceBowls = [];
+    let currentBowl = { base: {}, extra: {} };
+
+    function renderSelector() {
+      const div = document.getElementById("selector");
+      div.innerHTML = `<h3>選擇基本配料（剛好4份）</h3>`;
+      baseToppings.forEach(t => {
+        div.innerHTML += `${t} <button onclick="update('base','${t}',-1)">-</button> ${currentBowl.base[t] || 0} <button onclick="update('base','${t}',1)">+</button><br>`;
+      });
+      div.innerHTML += `<h3>額外配料（每份+5元）</h3>`;
+      extraToppings.forEach(t => {
+        div.innerHTML += `${t} <button onclick="update('extra','${t}',-1)">-</button> ${currentBowl.extra[t] || 0} <button onclick="update('extra','${t}',1)">+</button><br>`;
+      });
     }
+
+    function update(type, name, delta) {
+      const obj = type === "base" ? currentBowl.base : currentBowl.extra;
+      const val = (obj[name] || 0) + delta;
+      if (val < 0) return;
+      if (type === "base") {
+        const total = Object.values(currentBowl.base).reduce((a,b)=>a+b,0);
+        if (delta > 0 && total >= 4) return;
+      }
+      obj[name] = val;
+      renderSelector();
+    }
+
+    function renderOrder() {
+      const div = document.getElementById("order");
+      div.innerHTML = "";
+      iceBowls.forEach((bowl, i) => {
+        const base = Object.entries(bowl.base).map(([k,v]) => `${k}×${v}`).join("、");
+        const extra = Object.entries(bowl.extra).map(([k,v]) => `${k}×${v}`).join("、") || "無";
+        div.innerHTML += `<p>🍧 第${i+1}碗<br>基本：${base}<br>額外：${extra}</p>`;
+      });
+    }
+
+    document.getElementById("add-bowl").onclick = () => {
+      const total = Object.values(currentBowl.base).reduce((a,b)=>a+b,0);
+      if (total !== 4) return alert("基本配料需剛好 4 份！");
+      iceBowls.push(JSON.parse(JSON.stringify(currentBowl)));
+      currentBowl = { base: {}, extra: {} };
+      renderSelector();
+      renderOrder();
+    };
+
+    document.getElementById("submit").onclick = () => {
+      if (!iceBowls.length) return alert("請至少加入一碗剉冰！");
+      fetch("https://script.google.com/macros/s/AKfycbxVABFDadhqB8EYObIFQ1XaqQ3pfobenUmZ6DWngYf46L9X4QSxMQqqBUMcn_ZQ0iHr/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName, items: iceBowls })
+      }).then(res => res.text())
+        .then(txt => {
+          alert("訂單已送出！");
+          location.reload();
+        }).catch(err => {
+          alert("送出失敗！");
+          console.error(err);
+        });
+    };
+
+    async function init() {
+      await liff.init({ liffId: "你的 LIFF ID" });
+      if (!liff.isLoggedIn()) liff.login();
+      const profile = await liff.getProfile();
+      displayName = profile.displayName;
+    }
+
+    init();
+    renderSelector();
   </script>
 </body>
 </html>
