@@ -67,22 +67,20 @@
   </style>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
+
 <body>
   <h2>剉冰訂單測試</h2>
 
-  <!-- (上半部保留不動，直接從 <form> 開始接) -->
+  <form method="POST"
+    action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
+    target="hidden_iframe" id="testForm">
 
-<form method="POST"
-  action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
-  target="hidden_iframe" id="testForm">
+    <label>
+      訂購人名稱：
+      <input type="text" name="displayName" id="displayName" required readonly />
+    </label>
 
-  <label>
-    訂購人名稱：
-    <input type="text" name="displayName" id="displayName" required readonly />
-  </label>
-
-  <!-- 配料區略（保持原本不動） -->
-  <h3>基本配料（至少選 4 份）</h3>
+    <h3>基本配料（至少選 4 份）</h3>
     <div class="topping">紅豆：
       <div class="qty-controls">
         <button type="button" data-target="redBean">−</button>
@@ -128,100 +126,91 @@
       </div>
     </div>
 
-  <input type="hidden" name="items" id="itemsInput" />
-  <br />
-  <button type="submit">送出訂單</button>
-</form>
+    <input type="hidden" name="items" id="itemsInput" />
+    <br />
+    <button type="submit">送出訂單</button>
+  </form>
 
-<!-- ✅ 新增成功訊息 -->
-<div id="successMessage" style="display:none; margin-top: 20px; font-size: 18px; color: green;">
-  ✅ 訂單已送出！
-</div>
+  <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe" onload="handleIframeSubmit()"></iframe>
 
-<iframe name="hidden_iframe" style="display:none;" id="hidden_iframe" onload="handleIframeSubmit()"></iframe>
+  <script>
+    const liffId = "2007677925-l15WX11o"; // 替換成你自己的 LIFF ID
+    let hasSubmitted = false;
 
-<script>
-  const liffId = "2007677925-l15WX11o";
+    const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
+    const extraIds = ["condensedMilk", "chocolateSauce"];
+    const idToName = {
+      redBean: "紅豆",
+      greenBean: "綠豆",
+      grassJelly: "仙草",
+      taroBall: "芋圓",
+      condensedMilk: "煉乳",
+      chocolateSauce: "巧克力醬"
+    };
 
-  const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
-  const extraIds = ["condensedMilk", "chocolateSauce"];
-  const idToName = {
-    redBean: "紅豆",
-    greenBean: "綠豆",
-    grassJelly: "仙草",
-    taroBall: "芋圓",
-    condensedMilk: "煉乳",
-    chocolateSauce: "巧克力醬"
-  };
-
-  async function initLiff() {
-    await liff.init({ liffId });
-    if (!liff.isLoggedIn()) {
-      liff.login();
-    } else {
-      const profile = await liff.getProfile();
-      document.getElementById("displayName").value = profile.displayName;
-    }
-  }
-
-  initLiff();
-
-  document.querySelectorAll("button[data-target]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.getAttribute("data-target");
-      const input = document.getElementById(id);
-      let val = parseInt(input.value) || 0;
-      if (btn.textContent === "＋") {
-        input.value = val + 1;
-      } else if (btn.textContent === "−") {
-        if (val > 0) input.value = val - 1;
+    async function initLiff() {
+      await liff.init({ liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+      } else {
+        const profile = await liff.getProfile();
+        document.getElementById("displayName").value = profile.displayName;
       }
-    });
-  });
-
-  document.getElementById("testForm").addEventListener("submit", (e) => {
-    const baseToppings = {};
-    let baseCount = 0;
-    baseIds.forEach(id => {
-      const qty = parseInt(document.getElementById(id).value) || 0;
-      if (qty > 0) {
-        baseToppings[idToName[id]] = qty;
-        baseCount += qty;
-      }
-    });
-
-    if (baseCount < 4) {
-      alert("基本配料至少選 4 份！");
-      e.preventDefault();
-      return;
     }
 
-    const extraToppings = {};
-    extraIds.forEach(id => {
-      const qty = parseInt(document.getElementById(id).value) || 0;
-      if (qty > 0) {
-        extraToppings[idToName[id]] = qty;
-      }
+    initLiff();
+
+    document.querySelectorAll("button[data-target]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-target");
+        const input = document.getElementById(id);
+        let val = parseInt(input.value) || 0;
+        if (btn.textContent === "＋") {
+          input.value = val + 1;
+        } else if (btn.textContent === "−") {
+          if (val > 0) input.value = val - 1;
+        }
+      });
     });
 
-    const bowl = { baseToppings, extraToppings };
-    const items = [bowl];
-    document.getElementById("itemsInput").value = JSON.stringify(items);
-  });
+    document.getElementById("testForm").addEventListener("submit", (e) => {
+      const baseToppings = {};
+      let baseCount = 0;
+      baseIds.forEach(id => {
+        const qty = parseInt(document.getElementById(id).value) || 0;
+        if (qty > 0) {
+          baseToppings[idToName[id]] = qty;
+          baseCount += qty;
+        }
+      });
 
-  // ✅ 偵測 iframe 載入後跳 alert + 轉頁
-  function handleIframeSubmit() {
-    // 避免第一次載入就跳訊息
-    if (!handleIframeSubmit.hasRunOnce) {
-      handleIframeSubmit.hasRunOnce = true;
-      return;
+      if (baseCount < 4) {
+        alert("基本配料至少選 4 份！");
+        e.preventDefault();
+        return;
+      }
+
+      const extraToppings = {};
+      extraIds.forEach(id => {
+        const qty = parseInt(document.getElementById(id).value) || 0;
+        if (qty > 0) {
+          extraToppings[idToName[id]] = qty;
+        }
+      });
+
+      const bowl = { baseToppings, extraToppings };
+      const items = [bowl];
+      document.getElementById("itemsInput").value = JSON.stringify(items);
+
+      hasSubmitted = true; // ✅ 表單已送出
+    });
+
+    function handleIframeSubmit() {
+      if (hasSubmitted) {
+        alert("訂單已送出！");
+        window.location.href = "order-confirm.html";
+      }
     }
-
-    alert("訂單已送出！");
-    window.location.href = "order-confirm.html"; // <-- 你要導向的訂單確認頁
-  }
-</script>
-
-
+  </script>
 </body>
 </html>
