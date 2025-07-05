@@ -3,8 +3,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>剉冰訂單測試 (手機版)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>歡迎來『阿香來剉冰』點餐！</title>
   <style>
     body {
       font-family: sans-serif;
@@ -116,12 +116,18 @@
       margin-top: 10px;
       text-align: right;
     }
+
+    #welcomeMsg {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
   </style>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
 <body>
-  <h2>剉冰訂單測試</h2>
+  <h2>歡迎來『阿香來剉冰』點餐！</h2>
+  <p id="welcomeMsg">哈囉～<span id="displayNameSpan"></span>，你今天想吃什麼？基本配料（最多 4 份，可以重複選擇相同的配料唷！）</p>
 
   <form method="POST"
     action="https://script.google.com/macros/s/AKfycbybspWTA86_Xdd0goi_vDmR4EdI84PtvMHHS09XifBHw-8zRvBTC_B4kLD9F1GNocu6/exec"
@@ -195,7 +201,7 @@
   <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe" onload="handleIframeSubmit()"></iframe>
 
   <script>
-    const liffId = "2007677925-l15WX11o"; // 替換成你自己的 LIFF ID
+    const liffId = "2007677925-l15WX11o"; // 替換成你的 LIFF ID
     let hasSubmitted = false;
 
     const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
@@ -220,40 +226,40 @@
       } else {
         const profile = await liff.getProfile();
         document.getElementById("displayName").value = profile.displayName;
+        document.getElementById("displayNameSpan").textContent = profile.displayName;
       }
     }
 
     initLiff();
 
     document.querySelectorAll("button[data-target]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const id = btn.getAttribute("data-target");
-    const input = document.getElementById(id);
-    let val = parseInt(input.value) || 0;
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-target");
+        const input = document.getElementById(id);
+        let val = parseInt(input.value) || 0;
 
-    if (btn.textContent === "＋") {
-      // 計算基本配料總數（加上這次的+1）
-      if (baseIds.includes(id)) {
-        let totalBaseCount = baseIds.reduce((sum, baseId) => {
-          if (baseId === id) {
-            return sum + val + 1;
-          } else {
-            return sum + (parseInt(document.getElementById(baseId).value) || 0);
+        if (btn.textContent === "＋") {
+          // 計算基本配料總數（加上這次的+1）
+          if (baseIds.includes(id)) {
+            let totalBaseCount = baseIds.reduce((sum, baseId) => {
+              if (baseId === id) {
+                return sum + val + 1;
+              } else {
+                return sum + (parseInt(document.getElementById(baseId).value) || 0);
+              }
+            }, 0);
+
+            if (totalBaseCount > 4) {
+              alert("最多只能選四種唷！");
+              return; // 阻止再加
+            }
           }
-        }, 0);
-
-        if (totalBaseCount > 4) {
-          alert("最多只能選四種唷！");
-          return; // 阻止再加
+          input.value = val + 1;
+        } else if (btn.textContent === "−") {
+          if (val > 0) input.value = val - 1;
         }
-      }
-      input.value = val + 1;
-    } else if (btn.textContent === "−") {
-      if (val > 0) input.value = val - 1;
-    }
-  });
-});
-
+      });
+    });
 
     function calculateBowlPrice(baseToppings, extraToppings) {
       let extraCount = 0;
@@ -311,7 +317,7 @@
       let extraToppings = {};
       extraIds.forEach(id => {
         const qty = parseInt(document.getElementById(id).value) || 0;
-        if(qty > 0){
+        if (qty > 0) {
           extraToppings[idToName[id]] = qty;
         }
       });
@@ -338,7 +344,7 @@
     });
 
     document.getElementById("testForm").addEventListener("submit", (e) => {
-      if(bowls.length === 0){
+      if (bowls.length === 0) {
         alert("請至少新增一碗冰！");
         e.preventDefault();
         return;
