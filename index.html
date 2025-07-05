@@ -266,40 +266,40 @@
     }
 
     function renderBowls() {
-      const bowlList = document.getElementById("bowlList");
-      bowlList.innerHTML = "";
-      bowls.forEach((bowl, index)
-      bowls.forEach((bowl, index) => {
-        const price = calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
-        const div = document.createElement("div");
-        div.className = "bowl-item";
+  const bowlList = document.getElementById("bowlList");
+  bowlList.innerHTML = "";
+  bowls.forEach((bowl, index) => {
+    const price = calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
+    const div = document.createElement("div");
+    div.className = "bowl-item";
 
-        let baseDesc = Object.entries(bowl.baseToppings)
-          .filter(([_, v]) => v > 0)
-          .map(([k, v]) => `${k}*${v}`)
-          .join("、");
-        let extraDesc = Object.entries(bowl.extraToppings)
-          .filter(([_, v]) => v > 0)
-          .map(([k, v]) => `${k}*${v}`)
-          .join("、");
-        if (!extraDesc) extraDesc = "無";
+    let baseDesc = Object.entries(bowl.baseToppings)
+      .filter(([_, v]) => v > 0)
+      .map(([k, v]) => `${k}*${v}`)
+      .join("、");
+    let extraDesc = Object.entries(bowl.extraToppings)
+      .filter(([_, v]) => v > 0)
+      .map(([k, v]) => `${k}*${v}`)
+      .join("、");
+    if (!extraDesc) extraDesc = "無";
 
-        div.innerHTML = `
-          <h4>第 ${index + 1} 碗 - 小計：${price} 元
-            <button type="button" class="delete-btn" data-index="${index}">刪除</button>
-          </h4>
-          <div>基本配料：${baseDesc}</div>
-          <div>額外配料：${extraDesc}</div>
-        `;
-        bowlList.appendChild(div);
-      });
+    div.innerHTML = `
+      <h4>第 ${index + 1} 碗 - 小計：${price} 元
+        <button type="button" class="delete-btn" data-index="${index}">刪除</button>
+      </h4>
+      <div>基本配料：${baseDesc}</div>
+      <div>額外配料：${extraDesc}</div>
+    `;
+    bowlList.appendChild(div);
+  });
 
-      // 總金額
-      const totalPrice = bowls.reduce((sum, bowl) => {
-        return sum + calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
-      }, 0);
-      document.getElementById("totalPrice").textContent = `總金額：${totalPrice} 元`;
-    }
+  // 總金額
+  const totalPrice = bowls.reduce((sum, bowl) => {
+    return sum + calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
+  }, 0);
+  document.getElementById("totalPrice").textContent = `總金額：${totalPrice} 元`;
+}
+
 
     document.getElementById("addBowlBtn").addEventListener("click", () => {
       // 讀取配料數量
