@@ -1,269 +1,36 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>剉冰點餐</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Noto+Serif+TC&display=swap');
-
-    body {
-      font-family: "Zhi Mang Xing", "Noto Serif TC", serif;
-      padding: 16px;
-      margin: 0;
-      background: #f2e8dc;
-      background-image: repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(0, 0, 0, 0.03) 30px);
-      color: #4b3621;
-    }
-
-    h1 {
-      text-align: center;
-      font-size: 32px;
-      margin-bottom: 16px;
-      font-weight: normal;
-    }
-
-    .section {
-      background: #fff8e7;
-      padding: 16px;
-      margin-bottom: 24px;
-      border-radius: 8px;
-      border: 2px solid #c3a873;
-      box-shadow: 2px 2px 4px rgba(75, 54, 33, 0.2);
-    }
-
-    button {
-      font-family: "Noto Serif TC", serif;
-      font-size: 16px;
-      margin: 2px 4px;
-      padding: 6px 12px;
-      border: 2px solid #4b3621;
-      background-color: #f5e4c3;
-      color: #4b3621;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #e9d7b4;
-    }
-
-    .delete-btn {
-      background-color: #c45c5c;
-      color: #fff8e7;
-      border-color: #833;
-    }
-
-    .delete-btn:hover {
-      background-color: #a94444;
-    }
-
-    .action-btn {
-      width: 100%;
-      padding: 12px;
-      font-size: 20px;
-      margin-top: 12px;
-      font-weight: bold;
-      background-color: #c3a873;
-      color: white;
-      border: none;
-      border-radius: 8px;
-    }
-
-    .submit-btn {
-      background-color: #497e56;
-    }
-
-    .add-bowl-btn {
-      background-color: #af7c52;
-    }
-
-    .price-tag {
-      font-weight: bold;
-      margin-top: 10px;
-      font-size: 18px;
-      color: #333;
-    }
-
-    h3 {
-      border-bottom: 1px dashed #aaa;
-      padding-bottom: 4px;
-      margin-top: 0;
-    }
-  </style>
-
+  <title>剉冰下單表單</title>
 </head>
-
 <body>
-  <h1>剉冰點餐</h1>
+  <h1>剉冰下單</h1>
 
-  <div class="section" id="topping-selector"></div>
+  <form action="https://script.google.com/macros/s/AKfycbwHBgkd_PN90_b-d6qiMbcfwzKkmSF0fRemLyafQLB9mzDEkUS2U-NHELW1M14VXX1m/exec" method="POST" target="hidden_iframe" onsubmit="return handleSubmit();">
+    <input type="hidden" name="displayName" value="測試用戶" />
 
-  <button class="action-btn add-bowl-btn" id="add-bowl-btn">✅ 加入這碗剉冰</button>
+    <label>基本配料（JSON 格式）：</label><br />
+    <textarea name="baseToppings" rows="2" cols="40">
+{"紅豆": 2, "綠豆": 1}
+    </textarea><br /><br />
 
-  <div class="section" id="bowl-list"></div>
+    <label>額外配料（JSON 格式）：</label><br />
+    <textarea name="extraToppings" rows="2" cols="40">
+{"芋圓": 1}
+    </textarea><br /><br />
 
-  <button class="action-btn submit-btn" id="submit-order">送出訂單</button>
+    <button type="submit">送出訂單</button>
+  </form>
+
+  <!-- 隱藏 iframe 接收返回結果，避免畫面跳轉 -->
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCCa8GMfHlu40X4xwLeRFiguciptNW10Xg",
-      authDomain: "ah-hsiang-s-shaved-ice-shop.firebaseapp.com",
-      databaseURL: "https://ah-hsiang-s-shaved-ice-shop-default-rtdb.firebaseio.com",
-      projectId: "ah-hsiang-s-shaved-ice-shop",
-      storageBucket: "ah-hsiang-s-shaved-ice-shop.firebasestorage.app",
-      messagingSenderId: "525201397285",
-      appId: "1:525201397285:web:7aa0a8c08faabcba1591cc",
-      measurementId: "G-7C7J14C0S6"
-    };
-    firebase.initializeApp(firebaseConfig);
-
-    const baseToppings = ["紅豆", "綠豆", "粉圓", "花生"];
-    const extraToppings = ["芋圓", "地瓜圓", "仙草", "煉乳"];
-    let userId = "";
-    let displayName = "";
-
-    let currentSelection = {
-      baseToppings: {},
-      extraToppings: {}
-    };
-    let iceBowls = [];
-
-    function updateTopping(type, name, delta) {
-      const toppings = type === "base" ? currentSelection.baseToppings : currentSelection.extraToppings;
-      const value = toppings[name] || 0;
-      const newVal = Math.max(0, value + delta);
-
-      if (type === "base") {
-        const totalBase = Object.values(currentSelection.baseToppings).reduce((a, b) => a + b, 0);
-        if (delta > 0 && totalBase >= 4) return; // 限制基本配料最多4
-      }
-
-      toppings[name] = newVal;
-      renderSelector();
+    function handleSubmit() {
+      alert("訂單已送出！LINE 訊息將傳送給你");
+      return true;
     }
-
-    function calculatePrice(bowl) {
-      const basePrice = 60;
-      const extraCount = Object.values(bowl.extraToppings).reduce((a, b) => a + b, 0);
-      return basePrice + extraCount * 5;
-    }
-
-    function renderSelector() {
-      const div = document.getElementById("topping-selector");
-      div.innerHTML = `
-        <h3>請選擇配料</h3>
-        <p><strong>基本配料（剛好4份）</strong></p>
-        ${baseToppings.map(t => `
-          ${t} <button onclick="updateTopping('base', '${t}', -1)">-</button>
-          ${currentSelection.baseToppings[t] || 0}
-          <button onclick="updateTopping('base', '${t}', 1)">+</button><br>
-        `).join("")}
-        <p><strong>額外配料（每份+5元）</strong></p>
-        ${extraToppings.map(t => `
-          ${t} <button onclick="updateTopping('extra', '${t}', -1)">-</button>
-          ${currentSelection.extraToppings[t] || 0}
-          <button onclick="updateTopping('extra', '${t}', 1)">+</button><br>
-        `).join("")}
-      `;
-    }
-
-    function renderBowlList() {
-      const listDiv = document.getElementById("bowl-list");
-      listDiv.innerHTML = "";
-
-      let total = 0;
-
-      iceBowls.forEach((bowl, index) => {
-        const price = calculatePrice(bowl);
-        total += price;
-        const el = document.createElement("div");
-        el.className = "ice-bowl";
-        el.innerHTML = `
-          <h3>剉冰 ${index + 1}</h3>
-          <p>基本配料: ${Object.entries(bowl.baseToppings).map(([k, v]) => `${k}×${v}`).join(", ")}</p>
-          <p>額外配料: ${Object.entries(bowl.extraToppings).map(([k, v]) => `${k}×${v}`).join(", ") || "無"}</p>
-          <p class="price-tag">小計：$${price}</p>
-          <button class="delete-btn" onclick="removeBowl(${index})">刪除這碗</button>
-        `;
-        listDiv.appendChild(el);
-      });
-
-      const totalEl = document.createElement("p");
-      totalEl.className = "price-tag";
-      totalEl.innerText = `總金額：$${total}`;
-      listDiv.appendChild(totalEl);
-    }
-
-    function removeBowl(index) {
-      iceBowls.splice(index, 1);
-      renderBowlList();
-    }
-
-    document.getElementById("add-bowl-btn").onclick = () => {
-      const totalBase = Object.values(currentSelection.baseToppings).reduce((a, b) => a + b, 0);
-      if (totalBase !== 4) return alert("基本配料必須剛好選4份！");
-
-      iceBowls.push(JSON.parse(JSON.stringify(currentSelection))); // 深拷貝
-      currentSelection = { baseToppings: {}, extraToppings: {} };
-      renderSelector();
-      renderBowlList();
-    };
-
-    document.getElementById("submit-order").onclick = () => {
-      if (!iceBowls.length) return alert("請至少加入一碗剉冰");
-
-      const order = {
-        items: iceBowls,
-        displayName,
-        status: "confirmed",
-        createdAt: Date.now()
-      };
-
-      firebase.database().ref("orders/" + userId).set(order).then(() => {
-        // 傳送訊息給自己
-        fetch("https://script.google.com/macros/s/AKfycbzDhdZk8BvlNPT5U4tLEGrBWQUbPpptOc9JFAuHAZpIcj6Se6bZY-eH-MeZlyz9fKYZ/exec", {
-method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(order)
-}).then(res => res.text()).then(txt => {
-  console.log("GAS 回傳訊息：", txt);
-  location.href = "confirm.html";
-}).catch(err => {
-  console.error("送出訊息失敗", err);
-  alert("送出訂單失敗！");
-});
-
-
-      });
-
-    };
-
-    async function initLIFF() {
-      await liff.init({ liffId: "2007677925-l15WX11o" });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-      } else {
-        const profile = await liff.getProfile();
-        userId = profile.userId;
-        displayName = profile.displayName;
-
-        firebase.database().ref("orders/" + userId).once("value").then(snapshot => {
-          const order = snapshot.val();
-          if (order && (order.status === "pending" || order.status === "confirmed")) {
-            location.href = "confirm.html";
-          }
-        });
-      }
-    }
-
-    initLIFF();
-    renderSelector();
   </script>
 </body>
-
 </html>
