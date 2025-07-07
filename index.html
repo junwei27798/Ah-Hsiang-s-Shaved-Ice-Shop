@@ -129,7 +129,6 @@
 
         <label>
             <input type="hidden" name="displayName" id="displayName" />
-            <input type="hidden" name="userId" id="userId" />
         </label>
 
         <h3>基本配料</h3>
@@ -221,7 +220,6 @@
                 const profile = await liff.getProfile();
                 document.getElementById("displayName").value = profile.displayName;
                 document.getElementById("nameDisplay").textContent = profile.displayName;
-                document.getElementById("userId").value = profile.userId; // ✅ 加這行
             }
         }
 
