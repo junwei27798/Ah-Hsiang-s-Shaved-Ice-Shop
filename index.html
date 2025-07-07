@@ -192,7 +192,7 @@
         <button type="submit">送出訂單</button>
     </form>
 
-    <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe" onload="handleIframeSubmit()"></iframe>
+    <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe"></iframe>
 
     <script>
         const liffId = "2007677925-l15WX11o"; // 替換成你自己的 LIFF ID
@@ -368,6 +368,10 @@
                 window.location.href = "order-confirm.html";
             }
         }
+        document.addEventListener("DOMContentLoaded", () => {
+          document.getElementById("hidden_iframe").addEventListener("load", handleIframeSubmit);
+        });
+
     </script>
 </body>
 
