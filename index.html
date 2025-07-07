@@ -131,7 +131,7 @@
     <h2>歡迎在『阿香來剉冰』點餐！</h2>
     <p id="greeting">哈囉～<span id="nameDisplay"></span>，你今天想吃什麼？</p>
     <form method="POST"
-        action="https://script.google.com/macros/s/AKfycbx4FdsH-4BCQbPagxwasdDFprmiURemB4B8mFTABAOpEtxIzZR6zm8ll4qG05Te6mTc/exec"
+        action="https://script.google.com/macros/s/AKfycbzshjFwHDey5v6peDTeH-5jhJL2eD_oFcc3vzU1YKQvFHF0ujxi24c3LukfAW6mFDWc/exec"
         target="hidden_iframe" id="testForm">
 
         <input type="hidden" name="displayName" id="displayName" />
@@ -478,14 +478,20 @@
             renderBowls();
         });
 
-        const hiddenIframe = document.getElementById("hidden_iframe");
-        hiddenIframe.onload = () => {
-            // iframe 載入觸發，避免一開始就觸發，須用 hasSubmitted 判斷
-            if (hasSubmitted) {
-                alert("訂單已送出，感謝您的訂購！");
-                liff.closeWindow();
-            }
-        };
+        let iframeLoadedOnce = false;
+
+document.getElementById("hidden_iframe").onload = () => {
+    if (!iframeLoadedOnce) {
+        // 第一次載入，還沒送出，不要處理
+        iframeLoadedOnce = true;
+        return;
+    }
+    if (hasSubmitted) {
+        alert("訂單已送出，感謝您的訂購！");
+        liff.closeWindow();
+    }
+};
+
 
         document.getElementById("testForm").addEventListener("submit", (e) => {
     if (bowls.length === 0) {
@@ -500,16 +506,18 @@
         return;
     }
 
-    // ✅ 立即禁用送出按鈕，防止連點
+    // ✅ 移到驗證都通過後才執行這些動作
     document.querySelector('button[type="submit"]').disabled = true;
     document.querySelector('button[type="submit"]').textContent = "送出中...";
-
-    // ✅ 也可禁用整個表單元素（可選）
     Array.from(document.getElementById("testForm").elements).forEach(el => el.disabled = true);
 
+    // ✅ 設定碗的 JSON
     document.getElementById("itemsInput").value = JSON.stringify(bowls);
+
+    // ✅ 最後才設定 hasSubmitted = true
     hasSubmitted = true;
 });
+
 
         
     </script>
