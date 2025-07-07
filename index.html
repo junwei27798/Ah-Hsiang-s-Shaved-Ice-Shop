@@ -124,7 +124,7 @@
     <h2>歡迎在『阿香來剉冰』點餐！</h2>
     <p id="greeting">哈囉～<span id="nameDisplay"></span>，你今天想吃什麼？</p>
     <form method="POST"
-        action="https://script.google.com/macros/s/AKfycbxY1CkhnhQZRdmHxwWEZw-YRc7-HmIhfAPt_qHBQlPJtXhltxRiCAgyA30UG53xr4ff/exec"
+        action="https://script.google.com/macros/s/AKfycbzXBg8nrFAFYcdKol7TQusouGu_B7E5QpULkDOZnSw413JfpiwUsLMOEmcPQr_nS4YL/exec"
         target="hidden_iframe" id="testForm">
 
         <label>
@@ -272,9 +272,19 @@
                 const div = document.createElement("div");
                 div.className = "bowl-item";
 
-                let baseDesc = Object.entries(bowl.baseToppings).map(([k, v]) => `${k}*${v}`).join("、");
-                let extraDesc = Object.entries(bowl.extraToppings).map(([k, v]) => `${k}*${v}`).join("、");
+                let baseDesc = Object.entries(bowl.baseToppings)
+                  .filter(([k, v]) => v > 0)
+                  .map(([k, v]) => `${k}*${v}`)
+                  .join("、");
+                
+                let extraDesc = Object.entries(bowl.extraToppings)
+                  .filter(([k, v]) => v > 0)
+                  .map(([k, v]) => `${k}*${v}`)
+                  .join("、");
+                
+                if (!baseDesc) baseDesc = "無"; // 如果全是0，可以改成顯示"無"或空字串
                 if (!extraDesc) extraDesc = "無";
+
 
                 div.innerHTML = `
           <h4>第 ${index + 1} 碗 - 小計：${price} 元
