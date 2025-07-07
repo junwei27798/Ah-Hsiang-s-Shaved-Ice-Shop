@@ -305,7 +305,7 @@
         <button type="submit">送出訂單</button>
     </form>
 
-    <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe"></iframe>
+    <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe" onload="handleIframeSubmit()"></iframe>
 
     <script>
         const liffId = "2007677925-l15WX11o"; // 改成你的 LIFF ID
@@ -488,24 +488,30 @@
         };
 
         document.getElementById("testForm").addEventListener("submit", (e) => {
-            if (bowls.length === 0) {
-                alert("請至少選擇一碗剉冰！");
-                e.preventDefault();
-                return;
-            }
-            const phone = document.getElementById("phone").value.trim();
-            if (!phone) {
-                alert("請輸入電話！");
-                e.preventDefault();
-                return;
-            }
+    if (bowls.length === 0) {
+        alert("請至少選擇一碗剉冰！");
+        e.preventDefault();
+        return;
+    }
+    const phone = document.getElementById("phone").value.trim();
+    if (!phone) {
+        alert("請輸入電話！");
+        e.preventDefault();
+        return;
+    }
 
-            // 送出時，將所有碗資料序列化
-            document.getElementById("itemsInput").value = JSON.stringify(bowls);
+    // ✅ 立即禁用送出按鈕，防止連點
+    document.querySelector('button[type="submit"]').disabled = true;
+    document.querySelector('button[type="submit"]').textContent = "送出中...";
 
-            hasSubmitted = true; // 標示已送出，等待 iframe onload 事件
-            // 表單繼續送出，不阻止
-        });
+    // ✅ 也可禁用整個表單元素（可選）
+    Array.from(document.getElementById("testForm").elements).forEach(el => el.disabled = true);
+
+    document.getElementById("itemsInput").value = JSON.stringify(bowls);
+    hasSubmitted = true;
+});
+
+        
     </script>
 </body>
 
