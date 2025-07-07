@@ -131,12 +131,13 @@
     <h2>歡迎在『阿香來剉冰』點餐！</h2>
     <p id="greeting">哈囉～<span id="nameDisplay"></span>，你今天想吃什麼？</p>
     <form method="POST"
-        action="https://script.google.com/macros/s/AKfycby-Sc8zAbluANXfktzR-R4ophpeYvoFmTxuy8ukHrIfhlq29dOi7zGJxkxMDnbopAzs/exec"
+        action="https://script.google.com/macros/s/AKfycbx4FdsH-4BCQbPagxwasdDFprmiURemB4B8mFTABAOpEtxIzZR6zm8ll4qG05Te6mTc/exec"
         target="hidden_iframe" id="testForm">
 
         <input type="hidden" name="displayName" id="displayName" />
         <input type="hidden" name="userId" id="userId" />
-        <p class="out-of-stock">※※補貨中代表暫時沒貨，請大家先跳過喔～謝謝！</p>
+        <p class="out-of-stock">※補貨中代表暫時沒貨，請大家先跳過喔～謝謝！</p>
+
         <h3>基本配料</h3>
         <div id="basicToppingsContainer">
             <div class="topping">仙草 (補貨中)
@@ -288,7 +289,7 @@
         <button type="button" id="addBowlBtn">選好了！</button>
 
         <label>
-            電話（必填）：
+            電話（必填的唷！因為怕突然沒料，來不及更新菜單，需要另外通知～）：
             <input type="text" id="phone" name="phone" required placeholder="請輸入電話號碼" />
         </label>
 
@@ -307,7 +308,7 @@
     <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe"></iframe>
 
     <script>
-        const liffId = "2007677925-l15WX11o"; // 請改成你的 LIFF ID
+        const liffId = "2007677925-l15WX11o"; // 改成你的 LIFF ID
         let hasSubmitted = false;
 
         // 基本配料 id 與中文對應
@@ -351,7 +352,7 @@
         }
         initLiff();
 
-        // 綁定基本配料區塊按鈕事件（限制加總不能超過4份）
+        // 基本配料限制 4 份（可重複）
         document.querySelectorAll("#basicToppingsContainer button[data-target]").forEach(btn => {
             btn.addEventListener("click", () => {
                 const id = btn.getAttribute("data-target");
@@ -359,7 +360,6 @@
                 let val = parseInt(input.value) || 0;
 
                 if (btn.textContent === "＋") {
-                    // 計算基本配料總數（包含這次加1）
                     let totalBaseCount = baseIds.reduce((sum, baseId) => {
                         let curVal = parseInt(document.getElementById(baseId).value) || 0;
                         if (baseId === id) curVal += 1;
@@ -377,7 +377,7 @@
             });
         });
 
-        // 綁定額外配料區塊按鈕事件（不限制數量）
+        // 額外配料不限制數量
         document.querySelectorAll("#extraToppingsContainer button[data-target]").forEach(btn => {
             btn.addEventListener("click", () => {
                 const id = btn.getAttribute("data-target");
@@ -428,73 +428,71 @@
                 bowlList.appendChild(div);
             });
 
-            // 刪除按鈕事件
+            // 總價計算
+            const totalPrice = bowls.reduce((sum, bowl) => {
+                return sum + calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
+            }, 0);
+            document.getElementById("totalPrice").textContent = `總金額：${totalPrice} 元`;
+
+            // 綁定刪除按鈕
             document.querySelectorAll(".delete-btn").forEach(btn => {
                 btn.addEventListener("click", () => {
                     const idx = parseInt(btn.getAttribute("data-index"));
                     if (!isNaN(idx)) {
                         bowls.splice(idx, 1);
                         renderBowls();
-                        updateTotalPrice();
                     }
                 });
             });
-
-            updateTotalPrice();
         }
 
-        function updateTotalPrice() {
-            let total = 0;
-            bowls.forEach(bowl => {
-                total += calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
-            });
-            document.getElementById("totalPrice").textContent = `總金額：${total} 元`;
-        }
-
+        // 按「選好了！」將目前選的配料加入 bowls 陣列
         document.getElementById("addBowlBtn").addEventListener("click", () => {
-            // 讀基本配料
-            let baseToppings = {};
-            let baseCount = 0;
-            baseIds.forEach(id => {
-                let val = parseInt(document.getElementById(id).value) || 0;
-                baseToppings[idToName[id]] = val;
-                baseCount += val;
-            });
-
+            // 檢查基本配料數量是否為 4
+            const baseCount = baseIds.reduce((sum, id) => sum + (parseInt(document.getElementById(id).value) || 0), 0);
             if (baseCount !== 4) {
-                alert("基本配料麻煩幫我選滿4份唷！可以重複～");
+                alert("每碗冰的基本配料數量必須正好是 4 份（可重複）！");
                 return;
             }
 
-            // 讀額外配料
-            let extraToppings = {};
-            extraIds.forEach(id => {
-                let val = parseInt(document.getElementById(id).value) || 0;
-                if (val > 0) {
-                    // 去掉 _extra 後對應中文名稱
-                    const key = id.replace("_extra", "");
-                    extraToppings[idToName[key]] = val;
-                }
+            // 讀基本配料數量
+            let baseToppings = {};
+            baseIds.forEach(id => {
+                const val = parseInt(document.getElementById(id).value) || 0;
+                if (val > 0) baseToppings[idToName[id]] = val;
             });
 
-            // 加入碗
+            // 讀額外配料數量
+            let extraToppings = {};
+            extraIds.forEach(id => {
+                const val = parseInt(document.getElementById(id).value) || 0;
+                if (val > 0) extraToppings[idToName[id.replace("_extra", "")]] = val;
+            });
+
             bowls.push({ baseToppings, extraToppings });
 
-            // 清空輸入欄位
-            baseIds.forEach(id => document.getElementById(id).value = 0);
-            extraIds.forEach(id => document.getElementById(id).value = 0);
+            // 清空選項欄位
+            baseIds.forEach(id => (document.getElementById(id).value = 0));
+            extraIds.forEach(id => (document.getElementById(id).value = 0));
 
             renderBowls();
         });
 
-        // 表單送出時帶入 items JSON
-        document.getElementById("testForm").addEventListener("submit", e => {
+        const hiddenIframe = document.getElementById("hidden_iframe");
+        hiddenIframe.onload = () => {
+            // iframe 載入觸發，避免一開始就觸發，須用 hasSubmitted 判斷
+            if (hasSubmitted) {
+                alert("訂單已送出，感謝您的訂購！");
+                liff.closeWindow();
+            }
+        };
+
+        document.getElementById("testForm").addEventListener("submit", (e) => {
             if (bowls.length === 0) {
                 alert("請至少選擇一碗剉冰！");
                 e.preventDefault();
                 return;
             }
-            // phone欄必填檢查（HTML required也會檢查）
             const phone = document.getElementById("phone").value.trim();
             if (!phone) {
                 alert("請輸入電話！");
@@ -502,15 +500,11 @@
                 return;
             }
 
-            const remark = document.getElementById("remark").value.trim();
+            // 送出時，將所有碗資料序列化
+            document.getElementById("itemsInput").value = JSON.stringify(bowls);
 
-            const dataToSend = {
-                items: bowls,
-                phone,
-                remark
-            };
-
-            document.getElementById("itemsInput").value = JSON.stringify(dataToSend);
+            hasSubmitted = true; // 標示已送出，等待 iframe onload 事件
+            // 表單繼續送出，不阻止
         });
     </script>
 </body>
