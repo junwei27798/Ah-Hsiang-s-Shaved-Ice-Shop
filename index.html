@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>阿香來剉冰</title>
     <style>
         body {
@@ -116,6 +116,13 @@
             margin-top: 10px;
             text-align: right;
         }
+
+        /* 補貨中紅字提醒 */
+        .out-of-stock {
+            color: red;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
     </style>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
@@ -124,61 +131,166 @@
     <h2>歡迎在『阿香來剉冰』點餐！</h2>
     <p id="greeting">哈囉～<span id="nameDisplay"></span>，你今天想吃什麼？</p>
     <form method="POST"
-        action="https://script.google.com/macros/s/AKfycbyJi5othbgLARZ8uDw5ULMkxbLT_6h45786mlU0IZj_8Y0qzPffZ5IuxENaQzKwA1iF/exec"
+        action="https://script.google.com/macros/s/AKfycbyBE1H55wSzdNEmZlhhTtBCWuZvz1gD6ZIvIzwdL3LVhdCDoO4rWvFJrfzagmgqsFYG/exec"
         target="hidden_iframe" id="testForm">
 
+        <input type="hidden" name="displayName" id="displayName" />
+        <input type="hidden" name="userId" id="userId" />
+
+        <h3>基本配料 <span class="out-of-stock">※補貨中代表現在沒貨，各位老闆先不要點唷～抱歉！</span></h3>
+        <div id="basicToppingsContainer">
+            <div class="topping">仙草 (補貨中)
+                <div class="qty-controls">
+                    <button type="button" data-target="grassJelly">−</button>
+                    <input type="number" id="grassJelly" min="0" value="0" />
+                    <button type="button" data-target="grassJelly">＋</button>
+                </div>
+            </div>
+            <div class="topping">愛玉 (補貨中)
+                <div class="qty-controls">
+                    <button type="button" data-target="aiyuJelly">−</button>
+                    <input type="number" id="aiyuJelly" min="0" value="0" />
+                    <button type="button" data-target="aiyuJelly">＋</button>
+                </div>
+            </div>
+            <div class="topping">紅豆
+                <div class="qty-controls">
+                    <button type="button" data-target="redBean">−</button>
+                    <input type="number" id="redBean" min="0" value="0" />
+                    <button type="button" data-target="redBean">＋</button>
+                </div>
+            </div>
+            <div class="topping">綠豆 (補貨中)
+                <div class="qty-controls">
+                    <button type="button" data-target="greenBean">−</button>
+                    <input type="number" id="greenBean" min="0" value="0" />
+                    <button type="button" data-target="greenBean">＋</button>
+                </div>
+            </div>
+            <div class="topping">芋圓
+                <div class="qty-controls">
+                    <button type="button" data-target="taroBall">−</button>
+                    <input type="number" id="taroBall" min="0" value="0" />
+                    <button type="button" data-target="taroBall">＋</button>
+                </div>
+            </div>
+            <div class="topping">地瓜圓
+                <div class="qty-controls">
+                    <button type="button" data-target="sweetpotatoBall">−</button>
+                    <input type="number" id="sweetpotatoBall" min="0" value="0" />
+                    <button type="button" data-target="sweetpotatoBall">＋</button>
+                </div>
+            </div>
+            <div class="topping">QQ
+                <div class="qty-controls">
+                    <button type="button" data-target="QQ">−</button>
+                    <input type="number" id="QQ" min="0" value="0" />
+                    <button type="button" data-target="QQ">＋</button>
+                </div>
+            </div>
+            <div class="topping">粉圓
+                <div class="qty-controls">
+                    <button type="button" data-target="tapiocaPearl">−</button>
+                    <input type="number" id="tapiocaPearl" min="0" value="0" />
+                    <button type="button" data-target="tapiocaPearl">＋</button>
+                </div>
+            </div>
+            <div class="topping">煉乳
+                <div class="qty-controls">
+                    <button type="button" data-target="condensedMilk">−</button>
+                    <input type="number" id="condensedMilk" min="0" value="0" />
+                    <button type="button" data-target="condensedMilk">＋</button>
+                </div>
+            </div>
+            <div class="topping">巧克力醬
+                <div class="qty-controls">
+                    <button type="button" data-target="chocolateSauce">−</button>
+                    <input type="number" id="chocolateSauce" min="0" value="0" />
+                    <button type="button" data-target="chocolateSauce">＋</button>
+                </div>
+            </div>
+        </div>
+
+        <h3>額外配料（可不限數量）</h3>
+        <div id="extraToppingsContainer">
+            <div class="topping">仙草 (補貨中)
+                <div class="qty-controls">
+                    <button type="button" data-target="grassJelly_extra">−</button>
+                    <input type="number" id="grassJelly_extra" min="0" value="0" />
+                    <button type="button" data-target="grassJelly_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">愛玉 (補貨中)
+                <div class="qty-controls">
+                    <button type="button" data-target="aiyuJelly_extra">−</button>
+                    <input type="number" id="aiyuJelly_extra" min="0" value="0" />
+                    <button type="button" data-target="aiyuJelly_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">紅豆
+                <div class="qty-controls">
+                    <button type="button" data-target="redBean_extra">−</button>
+                    <input type="number" id="redBean_extra" min="0" value="0" />
+                    <button type="button" data-target="redBean_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">綠豆 (補貨中)
+                <div class="qty-controls">
+                    <button type="button" data-target="greenBean_extra">−</button>
+                    <input type="number" id="greenBean_extra" min="0" value="0" />
+                    <button type="button" data-target="greenBean_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">芋圓
+                <div class="qty-controls">
+                    <button type="button" data-target="taroBall_extra">−</button>
+                    <input type="number" id="taroBall_extra" min="0" value="0" />
+                    <button type="button" data-target="taroBall_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">地瓜圓
+                <div class="qty-controls">
+                    <button type="button" data-target="sweetpotatoBall_extra">−</button>
+                    <input type="number" id="sweetpotatoBall_extra" min="0" value="0" />
+                    <button type="button" data-target="sweetpotatoBall_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">QQ
+                <div class="qty-controls">
+                    <button type="button" data-target="QQ_extra">−</button>
+                    <input type="number" id="QQ_extra" min="0" value="0" />
+                    <button type="button" data-target="QQ_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">粉圓
+                <div class="qty-controls">
+                    <button type="button" data-target="tapiocaPearl_extra">−</button>
+                    <input type="number" id="tapiocaPearl_extra" min="0" value="0" />
+                    <button type="button" data-target="tapiocaPearl_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">煉乳
+                <div class="qty-controls">
+                    <button type="button" data-target="condensedMilk_extra">−</button>
+                    <input type="number" id="condensedMilk_extra" min="0" value="0" />
+                    <button type="button" data-target="condensedMilk_extra">＋</button>
+                </div>
+            </div>
+            <div class="topping">巧克力醬
+                <div class="qty-controls">
+                    <button type="button" data-target="chocolateSauce_extra">−</button>
+                    <input type="number" id="chocolateSauce_extra" min="0" value="0" />
+                    <button type="button" data-target="chocolateSauce_extra">＋</button>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" id="addBowlBtn">選好了！</button>
+
         <label>
-            <input type="hidden" name="displayName" id="displayName" />
-            <input type="hidden" name="userId" id="userId" />
+            電話（必填）：
+            <input type="text" id="phone" name="phone" required placeholder="請輸入電話號碼" />
         </label>
-
-        <h3>基本配料</h3>
-        <div class="topping">紅豆：
-            <div class="qty-controls">
-                <button type="button" data-target="redBean">−</button>
-                <input type="number" id="redBean" min="0" value="0" />
-                <button type="button" data-target="redBean">＋</button>
-            </div>
-        </div>
-        <div class="topping">綠豆：
-            <div class="qty-controls">
-                <button type="button" data-target="greenBean">−</button>
-                <input type="number" id="greenBean" min="0" value="0" />
-                <button type="button" data-target="greenBean">＋</button>
-            </div>
-        </div>
-        <div class="topping">仙草：
-            <div class="qty-controls">
-                <button type="button" data-target="grassJelly">−</button>
-                <input type="number" id="grassJelly" min="0" value="0" />
-                <button type="button" data-target="grassJelly">＋</button>
-            </div>
-        </div>
-        <div class="topping">芋圓：
-            <div class="qty-controls">
-                <button type="button" data-target="taroBall">−</button>
-                <input type="number" id="taroBall" min="0" value="0" />
-                <button type="button" data-target="taroBall">＋</button>
-            </div>
-        </div>
-
-        <h3>額外配料（可選）</h3>
-        <div class="topping">煉乳：
-            <div class="qty-controls">
-                <button type="button" data-target="condensedMilk">−</button>
-                <input type="number" id="condensedMilk" min="0" value="0" />
-                <button type="button" data-target="condensedMilk">＋</button>
-            </div>
-        </div>
-        <div class="topping">巧克力醬：
-            <div class="qty-controls">
-                <button type="button" data-target="chocolateSauce">−</button>
-                <input type="number" id="chocolateSauce" min="0" value="0" />
-                <button type="button" data-target="chocolateSauce">＋</button>
-            </div>
-        </div>
-
-        <button type="button" id="addBowlBtn">新增這碗</button>
 
         <label>
             備註：
@@ -195,19 +307,32 @@
     <iframe name="hidden_iframe" style="display:none;" id="hidden_iframe"></iframe>
 
     <script>
-        const liffId = "2007677925-l15WX11o"; // 替換成你自己的 LIFF ID
+        const liffId = "2007677925-l15WX11o"; // 請改成你的 LIFF ID
         let hasSubmitted = false;
 
-        const baseIds = ["redBean", "greenBean", "grassJelly", "taroBall"];
-        const extraIds = ["condensedMilk", "chocolateSauce"];
+        // 基本配料 id 與中文對應
+        const baseIds = [
+            "grassJelly", "aiyuJelly", "redBean", "greenBean",
+            "taroBall", "sweetpotatoBall", "QQ", "tapiocaPearl",
+            "condensedMilk", "chocolateSauce"
+        ];
+
+        // 額外配料 id 與中文對應（帶 _extra）
+        const extraIds = baseIds.map(id => id + "_extra");
+
         const idToName = {
+            grassJelly: "仙草",
+            aiyuJelly: "愛玉",
             redBean: "紅豆",
             greenBean: "綠豆",
-            grassJelly: "仙草",
             taroBall: "芋圓",
+            sweetpotatoBall: "地瓜圓",
+            QQ: "QQ",
+            tapiocaPearl: "粉圓",
             condensedMilk: "煉乳",
             chocolateSauce: "巧克力醬"
         };
+
         const BASE_PRICE = 60;
         const EXTRA_PRICE = 5;
 
@@ -224,31 +349,26 @@
                 document.getElementById("userId").value = profile.userId;
             }
         }
-
-
         initLiff();
 
-        document.querySelectorAll("button[data-target]").forEach(btn => {
+        // 綁定基本配料區塊按鈕事件（限制加總不能超過4份）
+        document.querySelectorAll("#basicToppingsContainer button[data-target]").forEach(btn => {
             btn.addEventListener("click", () => {
                 const id = btn.getAttribute("data-target");
                 const input = document.getElementById(id);
                 let val = parseInt(input.value) || 0;
 
                 if (btn.textContent === "＋") {
-                    // 計算基本配料總數（加上這次的+1）
-                    if (baseIds.includes(id)) {
-                        let totalBaseCount = baseIds.reduce((sum, baseId) => {
-                            if (baseId === id) {
-                                return sum + val + 1;
-                            } else {
-                                return sum + (parseInt(document.getElementById(baseId).value) || 0);
-                            }
-                        }, 0);
+                    // 計算基本配料總數（包含這次加1）
+                    let totalBaseCount = baseIds.reduce((sum, baseId) => {
+                        let curVal = parseInt(document.getElementById(baseId).value) || 0;
+                        if (baseId === id) curVal += 1;
+                        return sum + curVal;
+                    }, 0);
 
-                        if (totalBaseCount > 4) {
-                            alert("最多只能選 4 種唷！有需要再加料可以往下選～");
-                            return; // 阻止再加
-                        }
+                    if (totalBaseCount > 4) {
+                        alert("基本配料最多只能選 4 份唷！（可重複）");
+                        return;
                     }
                     input.value = val + 1;
                 } else if (btn.textContent === "−") {
@@ -257,6 +377,20 @@
             });
         });
 
+        // 綁定額外配料區塊按鈕事件（不限制數量）
+        document.querySelectorAll("#extraToppingsContainer button[data-target]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.getAttribute("data-target");
+                const input = document.getElementById(id);
+                let val = parseInt(input.value) || 0;
+
+                if (btn.textContent === "＋") {
+                    input.value = val + 1;
+                } else if (btn.textContent === "−") {
+                    if (val > 0) input.value = val - 1;
+                }
+            });
+        });
 
         function calculateBowlPrice(baseToppings, extraToppings) {
             let extraCount = 0;
@@ -275,103 +409,109 @@
                 div.className = "bowl-item";
 
                 let baseDesc = Object.entries(bowl.baseToppings)
-                  .filter(([k, v]) => v > 0)
-                  .map(([k, v]) => `${k}*${v}`)
-                  .join("、");
-                
-                let extraDesc = Object.entries(bowl.extraToppings)
-                  .filter(([k, v]) => v > 0)
-                  .map(([k, v]) => `${k}*${v}`)
-                  .join("、");
-                
-                if (!baseDesc) baseDesc = "無"; // 如果全是0，可以改成顯示"無"或空字串
-                if (!extraDesc) extraDesc = "無";
+                    .filter(([k, v]) => v > 0)
+                    .map(([k, v]) => `${k}*${v}`)
+                    .join("、");
 
+                let extraDesc = Object.entries(bowl.extraToppings)
+                    .filter(([k, v]) => v > 0)
+                    .map(([k, v]) => `${k}*${v}`)
+                    .join("、");
 
                 div.innerHTML = `
-          <h4>第 ${index + 1} 碗 - 小計：${price} 元
-            <button type="button" class="delete-btn" data-index="${index}">刪除</button>
-          </h4>
-          <div>基本配料：${baseDesc}</div>
-          <div>額外配料：${extraDesc}</div>
-        `;
+                    <h4>第 ${index + 1} 碗</h4>
+                    <div>基本配料：${baseDesc || "無"}</div>
+                    <div>額外配料：${extraDesc || "無"}</div>
+                    <div>小計：${price} 元</div>
+                    <button class="delete-btn" data-index="${index}">刪除</button>
+                `;
                 bowlList.appendChild(div);
             });
 
-            // 總金額
-            const totalPrice = bowls.reduce((sum, bowl) => {
-                return sum + calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
-            }, 0);
-            document.getElementById("totalPrice").textContent = `總金額：${totalPrice} 元`;
+            // 刪除按鈕事件
+            document.querySelectorAll(".delete-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const idx = parseInt(btn.getAttribute("data-index"));
+                    if (!isNaN(idx)) {
+                        bowls.splice(idx, 1);
+                        renderBowls();
+                        updateTotalPrice();
+                    }
+                });
+            });
+
+            updateTotalPrice();
+        }
+
+        function updateTotalPrice() {
+            let total = 0;
+            bowls.forEach(bowl => {
+                total += calculateBowlPrice(bowl.baseToppings, bowl.extraToppings);
+            });
+            document.getElementById("totalPrice").textContent = `總金額：${total} 元`;
         }
 
         document.getElementById("addBowlBtn").addEventListener("click", () => {
-            // 讀取配料數量
+            // 讀基本配料
             let baseToppings = {};
             let baseCount = 0;
             baseIds.forEach(id => {
-                const qty = parseInt(document.getElementById(id).value) || 0;
-                baseToppings[idToName[id]] = qty;
-                baseCount += qty;
+                let val = parseInt(document.getElementById(id).value) || 0;
+                baseToppings[idToName[id]] = val;
+                baseCount += val;
             });
-            // 檢查基本配料數量是否等於4
+
             if (baseCount !== 4) {
-                alert("基本配料必須選滿且只能選 4 份！");
+                alert("基本配料麻煩幫我選滿4份唷！可以重複～");
                 return;
             }
 
-            // 額外配料
+            // 讀額外配料
             let extraToppings = {};
             extraIds.forEach(id => {
-                const qty = parseInt(document.getElementById(id).value) || 0;
-                if (qty > 0) {
-                    extraToppings[idToName[id]] = qty;
+                let val = parseInt(document.getElementById(id).value) || 0;
+                if (val > 0) {
+                    // 去掉 _extra 後對應中文名稱
+                    const key = id.replace("_extra", "");
+                    extraToppings[idToName[key]] = val;
                 }
             });
 
-            // 加入碗陣列
+            // 加入碗
             bowls.push({ baseToppings, extraToppings });
 
-            // 清空輸入欄
+            // 清空輸入欄位
             baseIds.forEach(id => document.getElementById(id).value = 0);
             extraIds.forEach(id => document.getElementById(id).value = 0);
 
             renderBowls();
         });
 
-        // 刪除碗
-        document.getElementById("bowlList").addEventListener("click", (e) => {
-            if (e.target.classList.contains("delete-btn")) {
-                const index = parseInt(e.target.getAttribute("data-index"));
-                if (!isNaN(index)) {
-                    bowls.splice(index, 1);
-                    renderBowls();
-                }
-            }
-        });
-
-        document.getElementById("testForm").addEventListener("submit", (e) => {
+        // 表單送出時帶入 items JSON
+        document.getElementById("testForm").addEventListener("submit", e => {
             if (bowls.length === 0) {
-                alert("請至少新增一碗冰！");
+                alert("請至少選擇一碗剉冰！");
                 e.preventDefault();
                 return;
             }
-            // 把碗列表轉成字串送出
-            document.getElementById("itemsInput").value = JSON.stringify(bowls);
-
-            hasSubmitted = true;
-        });
-
-        function handleIframeSubmit() {
-            if (hasSubmitted) {
-                alert("訂單已送出！");
-                window.location.href = "order-confirm.html";
+            // phone欄必填檢查（HTML required也會檢查）
+            const phone = document.getElementById("phone").value.trim();
+            if (!phone) {
+                alert("請輸入電話！");
+                e.preventDefault();
+                return;
             }
-        }
-        document.addEventListener("DOMContentLoaded", () => {
-          document.getElementById("hidden_iframe").addEventListener("load", handleIframeSubmit);
-        });
 
+            const remark = document.getElementById("remark").value.trim();
+
+            const dataToSend = {
+                items: bowls,
+                phone,
+                remark
+            };
+
+            document.getElementById("itemsInput").value = JSON.stringify(dataToSend);
+        });
     </script>
 </body>
 
