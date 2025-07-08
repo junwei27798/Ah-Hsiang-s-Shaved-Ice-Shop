@@ -148,7 +148,7 @@
 
       orderText += `\n\n💰 總金額：${total} 元`;
 
-      fetch('https://script.google.com/macros/s/AKfycbykWiRShFkCj8TE6z9jnPBOOmJFJ2yiLx695H8hE1RTLYxpgIcS3v9drXzhyNktlkW3/exec', {
+      fetch('https://script.google.com/macros/s/AKfycbz-wAgDDd9iXfQaGdauh_WtQc5oDp84LXWpfhurhLUR35Pa10m2uhhtulcq0Xw42ph1/exec', {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
@@ -167,7 +167,7 @@
 
     // LIFF 初始化：取得 displayName
     async function initLiff() {
-      await liff.init({ liffId: "2007715635-BJonAn20" });
+      await liff.init({ liffId: "2007677925-l15WX11o" });
       if (!liff.isLoggedIn()) liff.login();
 
       const profile = await liff.getProfile();
