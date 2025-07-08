@@ -22,21 +22,11 @@
     }
     .order-list { background: white; padding: 1rem; margin-top: 1rem; border-radius: 8px; }
     .order-item { border-bottom: 1px solid #ccc; padding: 0.5rem 0; }
-    input[type="tel"] {
-      width: 100%; padding: 0.8rem; font-size: 1rem;
-      margin-bottom: 1rem; border-radius: 6px; border: 1px solid #ccc;
-    }
   </style>
 </head>
 <body>
 
   <h1>剉冰點餐</h1>
-
-  <label>
-    手機號碼<br>
-    <small style="color: gray;">（怕突然沒有配料，需要另外通知，所以務必填寫唷！）</small>
-  </label>
-  <input type="tel" id="phone" placeholder="請輸入手機號碼" required />
 
   <h2>基本配料（最多只選 4 種）</h2>
   <div class="ingredient-group" id="basic-ingredients"></div>
@@ -59,7 +49,6 @@
     const orders = [];
     let displayName = "";
 
-    // 建立配料選項
     ingredients.forEach(name => {
       document.getElementById("basic-ingredients").innerHTML += `
         <label class="ingredient">
@@ -86,24 +75,22 @@
     function addBowl() {
       const basic = [...document.querySelectorAll('.basic:checked')].map(el => el.value);
       const extra = [...document.querySelectorAll('.extra:checked')].map(el => el.value);
-    
+
       if (basic.length === 0) {
         alert("請至少選擇 1 種基本配料");
         return;
       }
-    
-      const subtotal = 60 + (extra.length * 10);
+
+      const subtotal = 60 + (extra.length * 5); // 額外配料單價為 5 元
       orders.push({ basic, extra, subtotal });
-    
-      // 清除選項
+
       document.querySelectorAll('input[type=checkbox]').forEach(cb => {
         cb.checked = false;
         cb.disabled = false;
       });
-    
+
       updateOrderList();
     }
-
 
     function updateOrderList() {
       const list = document.getElementById("orders");
@@ -122,21 +109,13 @@
     }
 
     function submitOrder() {
-      const phone = document.getElementById("phone").value.trim();
-      if (!phone) {
-        alert("請輸入手機號碼");
-        return;
-      }
-
       if (orders.length === 0) {
         alert("請先新增至少一碗剉冰");
         return;
       }
 
       let total = 0;
-      let orderText = `📥 剉冰新訂單
-👤 顧客：${displayName}
-📞 電話：${phone}\n`;
+      let orderText = `📥 剉冰新訂單\n👤 顧客：${displayName}\n`;
 
       orders.forEach((o, i) => {
         total += o.subtotal;
@@ -158,18 +137,15 @@
       alert("訂單已送出！");
       orders.length = 0;
       updateOrderList();
-      document.getElementById("phone").value = "";
 
       if (liff.isInClient()) {
         liff.closeWindow();
       }
     }
 
-    // LIFF 初始化：取得 displayName
     async function initLiff() {
       await liff.init({ liffId: "2007677925-l15WX11o" });
       if (!liff.isLoggedIn()) liff.login();
-
       const profile = await liff.getProfile();
       displayName = profile.displayName;
     }
